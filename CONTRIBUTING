@@ -1,0 +1,24 @@
+# Contributing
+
+Refer to the [Ansible community guide](https://docs.ansible.com/ansible/devel/community/index.html).
+
+## Getting Starting with Development
+
+### Requirement
+
+- RHEL Environment (or whatever suits but below package have to be changed)
+- [Docker](https://docs.docker.com/engine/install/rhel/)
+- Below packages
+
+```bash
+dnf install python3.12
+python3.12 -m venv custom-venv
+source custom-venv/bin/activate
+python -m pip install --upgrade pip
+pip3 install ansible-dev-tools
+pip3 install molecule-plugins[docker]
+pip install pre-commit
+sudo dnf install -y rsync
+```
+
+- OR just install the test-requirements.txt and test-requirments.yml

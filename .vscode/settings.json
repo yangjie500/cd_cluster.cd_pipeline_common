@@ -1,0 +1,29 @@
+{
+    "ansible.python.interpreterPath": "./custom-venv/bin/python",
+    "ansible.python.activationScript": "./custom-venv/bin/activate",
+    "ansible.validation.lint.path": "./custom-venv/bin/ansible-lint",
+    "python.terminal.activateEnvironment": true,
+    "files.associations": {
+        "**/*.yml": "ansible",
+        "**/*.yaml": "ansible"
+    },
+    "editor.formatOnSave": true,
+    "editor.defaultFormatter": "esbenp.prettier-vscode",
+
+    "[ansible]": {
+        "editor.defaultFormatter": "esbenp.prettier-vscode",
+        "editor.formatOnSave": true
+    },
+
+    "[yaml]": {
+        "editor.defaultFormatter": "esbenp.prettier-vscode",
+        "editor.formatOnSave": true
+    },
+    "[python]": {
+    "editor.defaultFormatter": "ms-python.black-formatter",
+    "editor.formatOnSave": true,
+    "editor.codeActionsOnSave": {
+        "source.organizeImports": "always"
+    }
+}
+}

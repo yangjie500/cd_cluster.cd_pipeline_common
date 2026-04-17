@@ -1,0 +1,15 @@
+---
+- name: Verify
+  hosts: all
+  gather_facts: false
+
+  tasks:
+    - name: Check hello file exists
+      ansible.builtin.stat:
+        path: "{{ sample_hello_file_path }}"
+      register: sample_result
+
+    - name: Assert file exists
+      ansible.builtin.assert:
+        that:
+          - sample_result.stat.exists

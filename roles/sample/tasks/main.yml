@@ -1,0 +1,6 @@
+---
+- name: Create hello file
+  ansible.builtin.copy:
+    dest: "{{ sample_hello_file_path }}"
+    content: "{{ sample_hello_file_content }}"
+    mode: "0644"

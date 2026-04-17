@@ -1,0 +1,32 @@
+---
+driver:
+  name: docker
+
+ansible:
+  executor:
+    backend: ansible-playbook
+
+provisioner:
+  name: ansible
+  config_options:
+    defaults:
+      # Uses the absolute path of your project to safely find the roles folder
+      roles_path: ${MOLECULE_PROJECT_DIRECTORY}/roles
+  inventory:
+    group_vars:
+      all:
+        sample_hello_file_path: /tmp/hello.txt
+        sample_hello_file_content: "Hello from Molecule test"
+
+platforms:
+  - name: instance
+    image: docker.io/alpine:3.23.3
+    privileged: false
+
+scenario:
+  name: default
+  test_sequence:
+    - create
+    - converge
+    - verify
+    - destroy

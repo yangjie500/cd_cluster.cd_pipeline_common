@@ -1,0 +1,12 @@
+{
+  "recommendations": [
+    "ms-python.python",
+    "ms-python.vscode-pylance",
+    "ms-python.vscode-python-envs",
+    "redhat.ansible",
+    "redhat.vscode-yaml",
+    "esbenp.prettier-vscode",
+    "ms-python.black-formatter",
+    "ms-python.isort"
+  ]
+}
