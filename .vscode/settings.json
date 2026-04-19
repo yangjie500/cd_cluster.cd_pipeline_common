@@ -4,8 +4,10 @@
     "ansible.validation.lint.path": "./custom-venv/bin/ansible-lint",
     "python.terminal.activateEnvironment": true,
     "files.associations": {
-        "**/*.yml": "ansible",
-        "**/*.yaml": "ansible"
+        "roles/**/*.yml": "ansible",
+        "roles/**/*.yaml": "ansible",
+        "extensions/molecule/**/*.yml": "ansible",
+        "extensions/molecule/**/*.yaml": "ansible"
     },
     "editor.formatOnSave": true,
     "editor.defaultFormatter": "esbenp.prettier-vscode",
