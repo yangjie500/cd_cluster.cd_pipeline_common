@@ -11,6 +11,7 @@ Refer to the [Ansible community guide](https://docs.ansible.com/ansible/devel/co
 - Below packages
 
 ```bash
+dnf install python3.9 # For pre-commit to work
 dnf install python3.12
 python3.12 -m venv custom-venv
 source custom-venv/bin/activate
