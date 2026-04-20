@@ -168,3 +168,6 @@ cython_debug/
 # Ansible
 .ansible/
 collections
+
+# Ignore Docsible metadata
+.docsible

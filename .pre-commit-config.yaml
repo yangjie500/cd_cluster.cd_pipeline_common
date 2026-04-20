@@ -6,6 +6,18 @@ repos:
       - id: update-docs
         language_version: python3.9
 
+  - repo: local
+    hooks:
+      - id: docsible
+        name: Update Ansible Role Documentation
+        # This shell loop finds every subdirectory in roles/ and runs docsible on it
+        entry: bash -c 'for role in roles/*; do [ -d "$role" ] && docsible --role "$role" --no-backup --no-docsible; done'
+        language: system
+        # Trigger if any role's files change
+        files: ^roles/.*/(tasks|defaults|meta|vars)/
+        pass_filenames: false
+        always_run: false
+
   - repo: https://github.com/pre-commit/pre-commit-hooks
     rev: v4.4.0
     hooks:
@@ -16,6 +28,8 @@ repos:
       - id: no-commit-to-branch
         args: [--branch, main]
       - id: trailing-whitespace
+        # Excludes README.md files specifically within the roles structure
+        exclude: ^roles/.*README\.md$
 
   - repo: https://github.com/asottile/add-trailing-comma
     rev: v3.0.0
