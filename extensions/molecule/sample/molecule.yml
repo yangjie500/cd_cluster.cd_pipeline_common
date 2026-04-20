@@ -24,7 +24,7 @@ platforms:
     privileged: false
 
 scenario:
-  name: default
+  name: sample
   test_sequence:
     - create
     - converge
