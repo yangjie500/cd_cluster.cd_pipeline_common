@@ -52,7 +52,7 @@ Yang Jie
 
 #### License
 
-license (GPL-2.0-or-later, MIT, etc)
+MIT
 
 #### Minimum Ansible Version
 
