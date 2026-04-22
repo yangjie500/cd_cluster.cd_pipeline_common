@@ -1,0 +1,28 @@
+---
+- name: Converge
+  hosts: instance
+  gather_facts: false
+  tasks:
+    - name: Install SFTP tools on Alpine
+      ansible.builtin.command: apk add --no-cache openssh-client sshpass
+      changed_when: true
+
+    - name: Get SFTP container details
+      delegate_to: localhost
+      community.docker.docker_container_info:
+        name: sftp-srv
+      register: sftp_info
+
+    - name: Set IP as fact for the tester
+      ansible.builtin.set_fact:
+        sftp_ip: "{{ sftp_info.container.NetworkSettings.Networks.bridge.IPAddress }}"
+
+    - name: Run selected role
+      ansible.builtin.include_role:
+        name: fetch_files_sftp
+      vars:
+        fetch_files_sftp_username: "foo"
+        fetch_files_sftp_sftp_password: "pass"
+        fetch_files_sftp_sftp_ip: "{{ sftp_ip }}"
+        fetch_files_sftp_file_path_src: "/upload/sftp-test-file.txt"
+        fetch_files_sftp_file_path_dest: "/tmp/sftp-test-file.txt"

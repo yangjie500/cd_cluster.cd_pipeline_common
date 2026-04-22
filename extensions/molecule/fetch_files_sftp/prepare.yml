@@ -1,0 +1,18 @@
+---
+- name: Prepare SFTP server with a test file
+  hosts: sftp-srv
+  gather_facts: false
+  tasks:
+    - name: Create the upload directory (if not already there)
+      ansible.builtin.file:
+        path: /home/foo/upload
+        state: directory
+        owner: foo
+        mode: "0755"
+
+    - name: Create the test file
+      ansible.builtin.copy:
+        content: "This is a test file for Molecule SFTP pull."
+        dest: /home/foo/upload/sftp-test-file.txt
+        owner: foo
+        mode: "0644"

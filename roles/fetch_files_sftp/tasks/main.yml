@@ -1,0 +1,34 @@
+---
+- name: "Role Configuration: fetch_files_sftp"
+  ansible.builtin.debug:
+    msg:
+      - "Username: {{ fetch_files_sftp_username | default('UNDEFINED') }}"
+      - "Target IP: {{ fetch_files_sftp_sftp_ip | default('UNDEFINED') }}"
+      - "Source Path: {{ fetch_files_sftp_file_path_src | default('UNDEFINED') }}"
+      - "Dest Path: {{ fetch_files_sftp_file_path_dest | default('UNDEFINED') }}"
+      - "Password: [MASKED]"
+
+- name: Manage SFTP File Transfer
+  block:
+    - name: Pull file from SFTP server
+      ansible.builtin.shell: >
+        sshpass -p {{ fetch_files_sftp_sftp_password }} sftp
+        -o StrictHostKeyChecking=no
+        {{ fetch_files_sftp_username }}@{{ fetch_files_sftp_sftp_ip }}:{{ fetch_files_sftp_file_path_src }}
+        {{ fetch_files_sftp_file_path_dest }}
+      changed_when: fetch_files_sftp_result.rc != 0 # <- Uses the return code to define when the task has changed.
+      register: fetch_files_sftp_result
+
+  rescue:
+    - name: Log the failure
+      ansible.builtin.debug:
+        msg: "Failed to pull file from SFTP server at {{ fetch_files_sftp_sftp_ip | default('Unknown') }}"
+
+    - name: Fail the task
+      ansible.builtin.fail:
+        msg: "The role failed because the SFTP transfer was unsuccessful."
+
+  always:
+    - name: Record attempt
+      ansible.builtin.debug:
+        msg: "SFTP transfer attempt completed."

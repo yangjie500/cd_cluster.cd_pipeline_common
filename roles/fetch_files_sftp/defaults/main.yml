@@ -1,0 +1,5 @@
+---
+fetch_files_sftp_username: ""
+fetch_files_sftp_sftp_password: ""
+fetch_files_sftp_sftp_ip: ""
+fetch_files_sftp_file_path: ""
