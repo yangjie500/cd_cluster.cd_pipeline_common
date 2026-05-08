@@ -1,0 +1,57 @@
+---
+- name: "Converge (Success: Private Repo)"
+  hosts: instance
+  gather_facts: false
+  tasks:
+    - name: Run selected role
+      ansible.builtin.include_role:
+        name: gitlab_clone_repository
+      vars:
+        gitlab_clone_repository_repo_url: "{{ gitlab_clone_repository_var_private_repo_url }}"
+        gitlab_clone_repository_dest_path: "/tmp/private_repo"
+        gitlab_clone_repository_version: "main"
+        gitlab_clone_repository_token_user: "oauth2"
+        gitlab_clone_repository_token: "{{ gitlab_clone_repository_secret_pat }}"
+        gitlab_clone_repository_verify_remote_server: false
+
+- name: "Converge (Success: Public Repo)"
+  hosts: instance
+  gather_facts: false
+  tasks:
+    - name: Run selected role
+      block:
+        - name: Run selected role
+          ansible.builtin.include_role:
+            name: gitlab_clone_repository
+          vars:
+            gitlab_clone_repository_repo_url: "{{ gitlab_clone_repository_var_public_repo_url }}"
+            gitlab_clone_repository_dest_path: "/tmp/public_repo"
+            gitlab_clone_repository_version: "main"
+            gitlab_clone_repository_token_user: ""
+            gitlab_clone_repository_token: ""
+            gitlab_clone_repository_verify_remote_server: false
+
+- name: "Converge (Failure: Wrong Password)"
+  hosts: instance
+  gather_facts: false
+  tasks:
+    - name: Run selected role
+      block:
+        - name: Run selected role
+          ansible.builtin.include_role:
+            name: gitlab_clone_repository
+          vars:
+            gitlab_clone_repository_repo_url: "gitlab.com/xxx.git"
+            gitlab_clone_repository_dest_path: "/tmp/wrong_password_dir"
+            gitlab_clone_repository_version: "main"
+            gitlab_clone_repository_token_user: "oauth2"
+            gitlab_clone_repository_token: "glpat-xxx" ### SECRET ###
+            gitlab_clone_repository_verify_remote_server: false
+          register: fail_role
+
+      rescue:
+        - name: Assert that the role threw an error
+          ansible.builtin.assert:
+            that:
+              - gitlab_clone_repository_role_output.failure_category == "bad_credentials"
+            fail_msg: "The test did not trap the expected role failure."

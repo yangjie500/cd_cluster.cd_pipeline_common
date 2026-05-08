@@ -1,0 +1,92 @@
+---
+- name: "[INFO] Role Configuration: gitlab_clone_repository"
+  ansible.builtin.debug:
+    msg:
+      - "Repo URL: {{ gitlab_clone_repository_repo_url | default('UNDEFINED', true) }}"
+      - "Dest Path: {{ gitlab_clone_repository_dest_path | default('UNDEFINED', true) }}"
+      - "Version: {{ gitlab_clone_repository_version | default('main', true) }}"
+      - "Token User: {{ gitlab_clone_repository_token_user | default('UNDEFINED', true) }}"
+      - "Verify remote server TLS: {{ gitlab_clone_repository_verify_remote_server | default('false', true) }}"
+      - "Password/Token: {{ '[MASKED]' if (gitlab_clone_repository_token | default('', true)) != '' else 'UNDEFINED' }}"
+
+- name: "[INFO] Initialize role tracking variables"
+  ansible.builtin.set_fact:
+    gitlab_clone_repository_tracked_files_modified: []
+    gitlab_clone_repository_tracked_files_deleted: []
+    gitlab_clone_repository_tracked_files_created: []
+    gitlab_clone_repository_tracked_custom_facts: {}
+    gitlab_clone_repository_failure_message: ""
+    gitlab_clone_repository_failure_category: ""
+
+- name: Manage GitLab Clone
+  block:
+    - name: Clone the repository from GitLab
+      ansible.builtin.git:
+        # yamllint disable rule:line-length
+        repo: >-
+          {{
+            'https://' ~ (gitlab_clone_repository_token_user | urlencode) ~ ':' ~ (gitlab_clone_repository_token | urlencode) ~ '@' ~ gitlab_clone_repository_repo_url
+            if gitlab_clone_repository_token | default('', true) | length > 0
+            else 'https://' ~ gitlab_clone_repository_repo_url
+          }}
+        dest: "{{ gitlab_clone_repository_dest_path }}"
+        version: "{{ gitlab_clone_repository_version | default('main') }}"
+        force: true
+        accept_hostkey: true
+      environment:
+        GIT_SSL_NO_VERIFY: "{{ 'true' if gitlab_clone_repository_verify_remote_server | default(false, true) else 'false' }}"
+      register: gitlab_clone_repository_result
+
+    - name: "[INFO] Trigger file discovery to find file created"
+      ansible.builtin.include_role:
+        name: file_discovery
+      vars:
+        file_discovery_path: "{{ gitlab_clone_repository_dest_path }}"
+        file_discovery_recursive: true
+
+    - name: "[INFO] Add discovered files to parent tracking list"
+      ansible.builtin.set_fact:
+        gitlab_clone_repository_tracked_files_created: >-
+          {{
+            gitlab_clone_repository_tracked_files_created | default([]) +
+            file_discovery_role_output.variables.discovered_paths | default([])
+          }}
+
+  rescue:
+    - name: "[ERROR] Record the exact task failure stderr"
+      ansible.builtin.set_fact:
+        gitlab_clone_repository_failure_message: "{{ ansible_failed_result.msg | default('An unknown error occurred.') }}"
+
+    - name: "[ERROR] Identify the specific failure type"
+      ansible.builtin.set_fact:
+        gitlab_clone_repository_failure_category: >-
+          {%- if 'Authentication failed' in ansible_failed_result.msg | default('') or 'permission denied' in ansible_failed_result.msg | default('') -%}
+            bad_credentials
+          {%- elif 'Could not resolve host' in ansible_failed_result.msg | default('') or 'timeout' in ansible_failed_result.msg | default('') -%}
+            network_issue
+          {%- elif 'destination path' in ansible_failed_result.msg | default('') and 'already exists' in ansible_failed_result.msg | default('') -%}
+            directory_conflict
+          {%- else -%}
+            unclassified_error
+          {%- endif -%}
+
+    - name: "[ERROR] Fail the task"
+      ansible.builtin.fail:
+        msg: "The role failed because the GitLab clone operation was unsuccessful."
+
+  always:
+    - name: "[INFO] Construct the Generic Role Output Object"
+      ansible.builtin.set_fact:
+        gitlab_clone_repository_role_output:
+          role_name: "{{ role_name }}"
+          failure_message: "{{ gitlab_clone_repository_failure_message }}"
+          failure_category: "{{ gitlab_clone_repository_failure_category }}"
+          files:
+            modified: "{{ gitlab_clone_repository_tracked_files_modified }}"
+            deleted: "{{ gitlab_clone_repository_tracked_files_deleted }}"
+            created: "{{ gitlab_clone_repository_tracked_files_created }}"
+          variables: "{{ gitlab_clone_repository_tracked_custom_facts }}"
+
+    - name: "[INFO] Print the generic output object"
+      ansible.builtin.debug:
+        var: gitlab_clone_repository_role_output

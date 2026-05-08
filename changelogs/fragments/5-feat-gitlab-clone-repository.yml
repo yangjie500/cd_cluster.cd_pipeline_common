@@ -1,0 +1,3 @@
+---
+major_changes:
+  - added logic to pull repository from gitlab repository (private, public)

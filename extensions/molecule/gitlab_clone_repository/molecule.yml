@@ -1,0 +1,34 @@
+---
+driver:
+  name: docker
+
+ansible:
+  executor:
+    backend: ansible-playbook
+
+provisioner:
+  name: ansible
+  config_options:
+    defaults:
+      # Uses the absolute path of your project to safely find the roles folder
+      roles_path: ${MOLECULE_PROJECT_DIRECTORY}/roles
+  inventory:
+    group_vars:
+      all:
+        gitlab_clone_repository_var_private_repo_url: "gitlab.com/cd-cluster/read-repository-molecule-test.git"
+        gitlab_clone_repository_var_public_repo_url: "gitlab.com/cd-cluster/read-public-repository-molecule-test.git"
+        gitlab_clone_repository_secret_pat: "${gitlab_clone_repository_secret_pat}"
+
+platforms:
+  - name: instance
+    image: docker.io/alpine:3.23.3
+    privileged: false
+
+scenario:
+  name: gitlab-clone-repository
+  test_sequence:
+    - create
+    - prepare
+    - converge
+    - verify
+    - destroy
