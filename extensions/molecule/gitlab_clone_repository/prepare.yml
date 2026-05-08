@@ -1,0 +1,8 @@
+---
+- name: Prepare
+  hosts: instance
+  gather_facts: false
+  tasks:
+    - name: Install git tools on Alpine
+      ansible.builtin.command: apk add --no-cache git
+      changed_when: true

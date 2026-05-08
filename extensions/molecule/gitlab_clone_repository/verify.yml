@@ -1,0 +1,32 @@
+---
+- name: "Verify (Success: Private Repo)"
+  hosts: all
+  gather_facts: false
+  tasks:
+    - name: Retrieve stat of molecule-testing-files.txt
+      ansible.builtin.stat:
+        path: "/tmp/private_repo/molecule-testing-files.txt"
+      register: file_stat
+
+    - name: Assert that the file exists on the container
+      ansible.builtin.assert:
+        that:
+          - file_stat.stat.exists
+        success_msg: "File molecule-testing-files.txt successfully created."
+        fail_msg: "File molecule-testing-files.txt is missing on the remote system."
+
+- name: "Verify (Success: Public Repo)"
+  hosts: all
+  gather_facts: false
+  tasks:
+    - name: Retrieve stat of public-molecule-testing-files.txt
+      ansible.builtin.stat:
+        path: "/tmp/public_repo/public-molecule-testing-files.txt"
+      register: file_stat
+
+    - name: Assert that the file exists on the container
+      ansible.builtin.assert:
+        that:
+          - file_stat.stat.exists
+        success_msg: "File public-molecule-testing-files.txt successfully created."
+        fail_msg: "File public-molecule-testing-files.txt is missing on the remote system."
