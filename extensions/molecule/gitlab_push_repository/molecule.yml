@@ -28,7 +28,7 @@ platforms:
     privileged: false
 
 scenario:
-  name: gitlab-clone-repository
+  name: gitlab-push-repository
   test_sequence:
     - create
     - prepare
