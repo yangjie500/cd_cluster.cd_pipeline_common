@@ -1,0 +1,72 @@
+---
+- name: "[INFO] Role Configuration: file_discovery"
+  ansible.builtin.debug:
+    msg:
+      - "Discovery Path: {{ file_discovery_path | default('UNDEFINED') }}"
+      - "Recursive: {{ file_discovery_recursive | default(true) }}"
+      - "Patterns: {{ file_discovery_patterns | default('*') }}"
+
+- name: "[INFO] Initialize role tracking variables"
+  ansible.builtin.set_fact:
+    file_discovery_tracked_files_modified: []
+    file_discovery_tracked_files_deleted: []
+    file_discovery_tracked_files_created: []
+    file_discovery_tracked_custom_facts: {}
+    file_discovery_failure_message: ""
+    file_discovery_failure_category: ""
+
+- name: Manage File Discovery
+  block:
+    - name: "Find files in {{ file_discovery_path }}"
+      ansible.builtin.find:
+        paths: "{{ file_discovery_path }}"
+        recurse: "{{ file_discovery_recursive | default(true) | bool }}"
+        patterns: "{{ file_discovery_patterns | default('*') }}"
+        file_type: file
+      register: _file_discovery_find_result
+
+    - name: "Store discovered paths in custom facts dictionary"
+      ansible.builtin.set_fact:
+        file_discovery_tracked_custom_facts: >-
+          {{
+            file_discovery_tracked_custom_facts | combine({
+              'discovered_paths': _file_discovery_find_result.files | map(attribute='path') | list
+            })
+          }}
+
+  rescue:
+    - name: "[ERROR] Record the exact task failure stderr"
+      ansible.builtin.set_fact:
+        file_discovery_failure_message: "{{ ansible_failed_result.msg | default('An unknown error occurred.') }}"
+
+    - name: "[ERROR] Identify the specific failure type"
+      ansible.builtin.set_fact:
+        file_discovery_failure_category: >-
+          {%- if 'does not exist' in ansible_failed_result.msg | default('') or 'not found' in ansible_failed_result.msg | default('') -%}
+            path_not_found
+          {%- elif 'Permission denied' in ansible_failed_result.msg | default('') -%}
+            permission_denied
+          {%- else -%}
+            unclassified_error
+          {%- endif -%}
+
+    - name: "[ERROR] Fail the task"
+      ansible.builtin.fail:
+        msg: "The file_discovery role failed to scan the target directory."
+
+  always:
+    - name: "[INFO] Construct the Generic Role Output Object"
+      ansible.builtin.set_fact:
+        file_discovery_role_output:
+          role_name: "{{ role_name }}"
+          failure_message: "{{ file_discovery_failure_message }}"
+          failure_category: "{{ file_discovery_failure_category }}"
+          files:
+            modified: "{{ file_discovery_tracked_files_modified }}"
+            deleted: "{{ file_discovery_tracked_files_deleted }}"
+            created: "{{ file_discovery_tracked_files_created }}"
+          variables: "{{ file_discovery_tracked_custom_facts }}"
+
+    - name: "[INFO] Print the generic output object"
+      ansible.builtin.debug:
+        var: file_discovery_role_output

@@ -1,0 +1,11 @@
+---
+# Default variables for file_discovery role
+
+# Path to start the discovery
+file_discovery_path: "/tmp"
+
+# Whether to walk through nested folders
+file_discovery_recursive: true
+
+# Patterns to look for (default is all files)
+file_discovery_patterns: "*"
