@@ -1,0 +1,26 @@
+---
+# Default variables for gitlab_push_repository role
+
+# The local path on the control node or remote host where the repo exists
+gitlab_push_repository_src_path: "/tmp/my-repo"
+
+# The target branch for the push (defaults to main)
+gitlab_push_repository_branch: "main"
+
+# A specific tag to apply to the commit (leave as null if no tag is needed)
+gitlab_push_repository_tag: ""
+
+# The commit message for the automated update
+gitlab_push_repository_message: "Ansible automated update"
+
+# The full Git URL, including authentication if using HTTPS
+gitlab_push_repository_url: ""
+
+# The username associated with your access token (defaults to 'oauth2' for GitLab PATs)
+gitlab_push_repository_token_user: "oauth2"
+
+# Set to true to bypass SSL certificate verification for self-hosted GitLab instances
+gitlab_push_repository_verify_remote_server: false
+
+# The private access token or deploy token (keep empty if cloning a public repo)
+gitlab_push_repository_token: ""

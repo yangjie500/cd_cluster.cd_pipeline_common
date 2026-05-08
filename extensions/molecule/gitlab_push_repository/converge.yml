@@ -1,0 +1,341 @@
+---
+- name: "Converge (Refresh Cache)"
+  hosts: instance
+  gather_facts: true
+  tasks:
+    - name: Force fresh facts
+      ansible.builtin.meta: clear_facts
+
+    - name: Re-gather facts to populate date_time
+      ansible.builtin.setup:
+        gather_subset:
+          - date_time
+
+- name: "Converge (Success: Private Repo Push to main)"
+  hosts: instance
+  gather_facts: true
+  tasks:
+    - name: Pull Gitlab Repository
+      ansible.builtin.include_role:
+        name: gitlab_clone_repository
+      vars:
+        gitlab_clone_repository_repo_url: "{{ gitlab_push_repository_var_repo_url }}"
+        gitlab_clone_repository_dest_path: "/tmp/write_repo"
+        gitlab_clone_repository_version: "main"
+        gitlab_clone_repository_token_user: "oauth2"
+        gitlab_clone_repository_token: "{{ gitlab_push_repository_secret_pat }}"
+        gitlab_clone_repository_verify_remote_server: true
+
+    - name: Re-gather facts to populate date_time
+      ansible.builtin.setup:
+        gather_subset:
+          - date_time
+
+    - name: Prepare the line for verification
+      ansible.builtin.set_fact:
+        test_1_timestamped_line: "write {{ ansible_facts['date_time']['iso8601'] }}"
+        cacheable: true
+
+    - name: Add the prepared line to write-file.txt
+      ansible.builtin.lineinfile:
+        path: "/tmp/write_repo/write-file.txt"
+        line: "{{ test_1_timestamped_line }}"
+        create: true
+        mode: "0644"
+      register: write_file_result
+
+    - name: Run push role
+      ansible.builtin.include_role:
+        name: gitlab_push_repository
+      vars:
+        gitlab_push_repository_src_path: "/tmp/write_repo"
+        gitlab_push_repository_branch: "main"
+        gitlab_push_repository_tag: ""
+        gitlab_push_repository_message: "Ansible automated update"
+        gitlab_push_repository_url: "{{ gitlab_push_repository_var_repo_url }}"
+        gitlab_push_repository_verify_remote_server: false
+        gitlab_push_repository_token_user: "oauth2"
+        gitlab_push_repository_token: "{{ gitlab_push_repository_secret_pat }}"
+
+- name: "Verify (Success: Private Repo Push to main)"
+  hosts: all
+  gather_facts: false
+  tasks:
+    - name: Pull Gitlab Repositroy
+      ansible.builtin.include_role:
+        name: gitlab_clone_repository
+      vars:
+        gitlab_clone_repository_repo_url: "{{ gitlab_push_repository_var_repo_url }}"
+        gitlab_clone_repository_dest_path: "/tmp/write_repo_verify"
+        gitlab_clone_repository_version: "main"
+        gitlab_clone_repository_token_user: "oauth2"
+        gitlab_clone_repository_token: "{{ gitlab_push_repository_secret_pat }}"
+        gitlab_clone_repository_verify_remote_server: false
+
+    - name: Read the last line of the file
+      ansible.builtin.command: "tail -n 1 /tmp/write_repo_verify/write-file.txt"
+      register: last_line_output
+      changed_when: false
+
+    - name: Verify the last line matches the saved timestamped line
+      ansible.builtin.assert:
+        that:
+          - last_line_output.stdout == test_1_timestamped_line
+        fail_msg: "Verification failed! Expected '{{ test_1_timestamped_line }}' but found '{{ last_line_output.stdout }}'"
+        success_msg: "Verification successful! The last line matches."
+
+- name: "Converge (Success: Private Repo Push to main and tag)"
+  hosts: instance
+  gather_facts: true
+  tasks:
+    - name: Pull Gitlab Repository
+      ansible.builtin.include_role:
+        name: gitlab_clone_repository
+      vars:
+        gitlab_clone_repository_repo_url: "{{ gitlab_push_repository_var_repo_url }}"
+        gitlab_clone_repository_dest_path: "/tmp/write_and_tag_repo"
+        gitlab_clone_repository_version: "main"
+        gitlab_clone_repository_token_user: "oauth2"
+        gitlab_clone_repository_token: "{{ gitlab_push_repository_secret_pat }}"
+        gitlab_clone_repository_verify_remote_server: true
+
+    - name: Re-gather facts to populate date_time
+      ansible.builtin.setup:
+        gather_subset:
+          - date_time
+
+    - name: Prepare the line for verification
+      ansible.builtin.set_fact:
+        test_2_timestamped_line: "write {{ ansible_facts['date_time']['iso8601'] }}"
+        test_2_repo_tag: "tag-{{ ansible_facts['date_time']['epoch'] }}"
+        cacheable: true
+
+    - name: Add the prepared line to write-file.txt
+      ansible.builtin.lineinfile:
+        path: "/tmp/write_and_tag_repo/write-file.txt"
+        line: "{{ test_2_timestamped_line }}"
+        create: true
+        mode: "0644"
+      register: write_file_result
+
+    - name: Run push role
+      ansible.builtin.include_role:
+        name: gitlab_push_repository
+      vars:
+        gitlab_push_repository_src_path: "/tmp/write_and_tag_repo"
+        gitlab_push_repository_branch: "main"
+        gitlab_push_repository_tag: "{{ test_2_repo_tag }}"
+        gitlab_push_repository_message: "Ansible automated update"
+        gitlab_push_repository_url: "{{ gitlab_push_repository_var_repo_url }}"
+        gitlab_push_repository_verify_remote_server: true
+        gitlab_push_repository_token_user: "oauth2"
+        gitlab_push_repository_token: "{{ gitlab_push_repository_secret_pat }}"
+
+- name: "Verify (Success: Private Repo Push to main and tag)"
+  hosts: all
+  gather_facts: false
+  tasks:
+    - name: Pull Gitlab Repositroy
+      ansible.builtin.include_role:
+        name: gitlab_clone_repository
+      vars:
+        gitlab_clone_repository_repo_url: "{{ gitlab_push_repository_var_repo_url }}"
+        gitlab_clone_repository_dest_path: "/tmp/write_and_tag_repo_verify"
+        gitlab_clone_repository_version: "{{ test_2_repo_tag }}"
+        gitlab_clone_repository_token_user: "oauth2"
+        gitlab_clone_repository_token: "{{ gitlab_push_repository_secret_pat }}"
+        gitlab_clone_repository_verify_remote_server: false
+
+    - name: Read the last line of the file
+      ansible.builtin.command: "tail -n 1 /tmp/write_and_tag_repo_verify/write-file.txt"
+      register: last_line_output
+      changed_when: false
+
+    - name: Verify the last line matches the saved timestamped line
+      ansible.builtin.assert:
+        that:
+          - last_line_output.stdout == test_2_timestamped_line
+        fail_msg: "Verification failed! Expected '{{ test_2_timestamped_line }}' but found '{{ last_line_output.stdout }}'"
+        success_msg: "Verification successful! The last line matches."
+
+- name: "Converge (Success: Private Repo Push to different branch)"
+  hosts: instance
+  gather_facts: true
+  tasks:
+    - name: Pull Gitlab Repository
+      ansible.builtin.include_role:
+        name: gitlab_clone_repository
+      vars:
+        gitlab_clone_repository_repo_url: "{{ gitlab_push_repository_var_repo_url }}"
+        gitlab_clone_repository_dest_path: "/tmp/write_diff_branch"
+        gitlab_clone_repository_version: "main"
+        gitlab_clone_repository_token_user: "oauth2"
+        gitlab_clone_repository_token: "{{ gitlab_push_repository_secret_pat }}"
+        gitlab_clone_repository_verify_remote_server: false
+
+    - name: Re-gather facts to populate date_time
+      ansible.builtin.setup:
+        gather_subset:
+          - date_time
+
+    - name: Prepare the line for verification
+      ansible.builtin.set_fact:
+        test_3_timestamped_line: "write {{ ansible_facts['date_time']['iso8601'] }}"
+        test_3_repo_branch: "branch-{{ ansible_facts['date_time']['epoch'] }}"
+        cacheable: true
+
+    - name: Add the prepared line to write-file.txt
+      ansible.builtin.lineinfile:
+        path: "/tmp/write_diff_branch/write-file.txt"
+        line: "{{ test_3_timestamped_line }}"
+        create: true
+        mode: "0644"
+      register: write_file_result
+
+    - name: Run push role
+      ansible.builtin.include_role:
+        name: gitlab_push_repository
+      vars:
+        gitlab_push_repository_src_path: "/tmp/write_diff_branch"
+        gitlab_push_repository_branch: "{{ test_3_repo_branch }}"
+        gitlab_push_repository_tag: ""
+        gitlab_push_repository_message: "Ansible automated update"
+        gitlab_push_repository_url: "{{ gitlab_push_repository_var_repo_url }}"
+        gitlab_push_repository_verify_remote_server: true
+        gitlab_push_repository_token_user: "oauth2"
+        gitlab_push_repository_token: "{{ gitlab_push_repository_secret_pat }}"
+
+- name: "Verify (Success: Private Repo Push to diff branch)"
+  hosts: all
+  gather_facts: false
+  tasks:
+    - name: Pull Gitlab Repositroy
+      ansible.builtin.include_role:
+        name: gitlab_clone_repository
+      vars:
+        gitlab_clone_repository_repo_url: "{{ gitlab_push_repository_var_repo_url }}"
+        gitlab_clone_repository_dest_path: "/tmp/write_diff_branch_verify"
+        gitlab_clone_repository_version: "{{ test_3_repo_branch }}"
+        gitlab_clone_repository_token_user: "oauth2"
+        gitlab_clone_repository_token: "{{ gitlab_push_repository_secret_pat }}"
+        gitlab_clone_repository_verify_remote_server: false
+
+    - name: Read the last line of the file
+      ansible.builtin.command: "tail -n 1 /tmp/write_diff_branch_verify/write-file.txt"
+      register: last_line_output
+      changed_when: false
+
+    - name: Verify the last line matches the saved timestamped line
+      ansible.builtin.assert:
+        that:
+          - last_line_output.stdout == test_3_timestamped_line
+        fail_msg: "Verification failed! Expected '{{ test_3_timestamped_line }}' but found '{{ last_line_output.stdout }}'"
+        success_msg: "Verification successful! The last line matches."
+
+- name: "Converge (Success: Private Repo Push to different branch and tag)"
+  hosts: instance
+  gather_facts: true
+  tasks:
+    - name: Pull Gitlab Repository
+      ansible.builtin.include_role:
+        name: gitlab_clone_repository
+      vars:
+        gitlab_clone_repository_repo_url: "{{ gitlab_push_repository_var_repo_url }}"
+        gitlab_clone_repository_dest_path: "/tmp/write_diff_branch_and_tag"
+        gitlab_clone_repository_version: "main"
+        gitlab_clone_repository_token_user: "oauth2"
+        gitlab_clone_repository_token: "{{ gitlab_push_repository_secret_pat }}"
+        gitlab_clone_repository_verify_remote_server: false
+
+    - name: Re-gather facts to populate date_time
+      ansible.builtin.setup:
+        gather_subset:
+          - date_time
+
+    - name: Prepare the line for verification
+      ansible.builtin.set_fact:
+        test_4_timestamped_line: "write {{ ansible_facts['date_time']['iso8601'] }}"
+        test_4_repo_branch: "branch-{{ ansible_facts['date_time']['epoch'] }}"
+        test_4_repo_tag: "tag-{{ ansible_facts['date_time']['epoch'] }}"
+        cacheable: true
+
+    - name: Add the prepared line to write-file.txt
+      ansible.builtin.lineinfile:
+        path: "/tmp/write_diff_branch_and_tag/write-file.txt"
+        line: "{{ test_4_timestamped_line }}"
+        create: true
+        mode: "0644"
+      register: write_file_result
+
+    - name: Run push role
+      ansible.builtin.include_role:
+        name: gitlab_push_repository
+      vars:
+        gitlab_push_repository_src_path: "/tmp/write_diff_branch_and_tag"
+        gitlab_push_repository_branch: "{{ test_4_repo_branch }}"
+        gitlab_push_repository_tag: "{{ test_4_repo_tag }}"
+        gitlab_push_repository_message: "Ansible automated update"
+        gitlab_push_repository_url: "{{ gitlab_push_repository_var_repo_url }}"
+        gitlab_push_repository_verify_remote_server: true
+        gitlab_push_repository_token_user: "oauth2"
+        gitlab_push_repository_token: "{{ gitlab_push_repository_secret_pat }}"
+
+- name: "Verify (Success: Private Repo Push to diff branch and tag)"
+  hosts: all
+  gather_facts: false
+  tasks:
+    - name: Pull Gitlab Repositroy
+      ansible.builtin.include_role:
+        name: gitlab_clone_repository
+      vars:
+        gitlab_clone_repository_repo_url: "{{ gitlab_push_repository_var_repo_url }}"
+        gitlab_clone_repository_dest_path: "/tmp/write_diff_branch_and_tag"
+        gitlab_clone_repository_version: "{{ test_4_repo_tag }}"
+        gitlab_clone_repository_token_user: "oauth2"
+        gitlab_clone_repository_token: "{{ gitlab_push_repository_secret_pat }}"
+        gitlab_clone_repository_verify_remote_server: false
+
+    - name: Read the last line of the file
+      ansible.builtin.command: "tail -n 1 /tmp/write_diff_branch_and_tag/write-file.txt"
+      register: last_line_output
+      changed_when: false
+
+    - name: Verify the last line matches the saved timestamped line
+      ansible.builtin.assert:
+        that:
+          - last_line_output.stdout == test_4_timestamped_line
+        fail_msg: "Verification failed! Expected '{{ test_4_timestamped_line }}' but found '{{ last_line_output.stdout }}'"
+        success_msg: "Verification successful! The last line matches."
+
+- name: "Converge (Failure: Not a git repo)"
+  hosts: instance
+  gather_facts: true
+  tasks:
+    - name: Run selected role
+      block:
+        - name: Create a directory if it does not exist
+          ansible.builtin.file:
+            path: "/tmp/not_repo"
+            state: directory
+            mode: "0755"
+
+        - name: Run push role
+          ansible.builtin.include_role:
+            name: gitlab_push_repository
+          vars:
+            gitlab_push_repository_src_path: "/tmp/not_repo"
+            gitlab_push_repository_branch: "main"
+            gitlab_push_repository_tag: ""
+            gitlab_push_repository_message: "Ansible automated update"
+            gitlab_push_repository_url: "{{ gitlab_push_repository_var_repo_url }}"
+            gitlab_push_repository_verify_remote_server: true
+            gitlab_push_repository_token_user: "oauth2"
+            gitlab_push_repository_token: "{{ gitlab_push_repository_secret_pat }}"
+          register: fail_role
+
+      rescue:
+        - name: Assert that the role threw an error
+          ansible.builtin.assert:
+            that:
+              - gitlab_push_repository_role_output.failure_category == "not_git_repo"
+            fail_msg: "The test did not trap the expected role failure."

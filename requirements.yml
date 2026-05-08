@@ -1,4 +1,5 @@
 ---
-# This file is empty to satisfy CI requirements
-collections: []
+collections:
+  - name: lvrfrc87.git_acp
+    version: "2.2.0"
 roles: []

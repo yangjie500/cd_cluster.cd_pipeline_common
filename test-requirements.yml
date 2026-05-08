@@ -6,3 +6,5 @@ collections:
     version: "2.1.0"
   - name: ansible.utils
     version: "6.0.2"
+  - name: lvrfrc87.git_acp
+    version: "2.2.0"
