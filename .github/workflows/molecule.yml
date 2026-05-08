@@ -16,6 +16,7 @@ jobs:
 
     env:
       gitlab_clone_repository_secret_pat: ${{ secrets.gitlab_clone_repository_secret_pat }}
+      gitlab_push_repository_secret_pat: ${{ secrets.gitlab_push_repository_secret_pat }}
 
     steps:
       - name: Checkout repository

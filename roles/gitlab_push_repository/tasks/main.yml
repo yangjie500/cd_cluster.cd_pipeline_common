@@ -1,0 +1,134 @@
+---
+- name: "Role Configuration: {{ role_name }}"
+  ansible.builtin.debug:
+    msg:
+      - "Repo Path: {{ gitlab_push_repository_src_path | default('UNDEFINED', true) }}"
+      - "Branch: {{ gitlab_push_repository_branch | default('main', true) }}"
+      - "Tag: {{ gitlab_push_repository_tag | default('UNDEFINED', true) }}"
+      - "Commit Msg: {{ gitlab_push_repository_message | default('Ansible automated update', true) }}"
+      - "Git URL: {{ gitlab_push_repository_url | default('UNDEFINED', true) }}"
+      - "Token User: {{ gitlab_push_repository_token_user | default('oauth2', true) }}"
+      - "Verify TLS: {{ gitlab_push_repository_verify_remote_server | default(false) }}"
+      - "Token: {{ '[MASKED]' if (gitlab_push_repository_token | default('', true) != '') else 'UNDEFINED' }}"
+
+- name: Initialize role tracking variables
+  ansible.builtin.set_fact:
+    gitlab_push_repository_tracked_files_modified: []
+    gitlab_push_repository_tracked_files_deleted: []
+    gitlab_push_repository_tracked_files_created: []
+    gitlab_push_repository_tracked_custom_facts: {}
+    gitlab_push_repository_failure_message: ""
+    gitlab_push_repository_failure_category: ""
+
+- name: Manage GitLab Push via git_acp
+  block:
+    - name: Configure Git to automatically setup remote tracking on push
+      # noqa: command-instead-of-module
+      ansible.builtin.command: "git config --global push.autoSetupRemote true"
+      changed_when: true
+
+    - name: Create and switch to the target branch locally
+      # noqa: command-instead-of-module
+      ansible.builtin.command: "git checkout -b {{ gitlab_push_repository_branch }}"
+      args:
+        chdir: "{{ gitlab_push_repository_src_path }}"
+      register: gitlab_push_repository_branch_creation
+      when:
+        - gitlab_push_repository_branch != 'main'
+        - gitlab_push_repository_branch != 'master'
+      # Prevent linting errors and only report change if successful
+      changed_when: gitlab_push_repository_branch_creation.rc == 0
+      # Ignore errors if the branch already exists locally (optional but safer)
+      failed_when:
+        - gitlab_push_repository_branch_creation.rc != 0
+        - "'already exists' not in gitlab_push_repository_branch_creation.stderr"
+
+    - name: Execute Git Add-Commit-Push
+      lvrfrc87.git_acp.git_acp:
+        path: "{{ gitlab_push_repository_src_path }}"
+        branch: "{{ gitlab_push_repository_branch | default('main') }}"
+        comment: "{{ gitlab_push_repository_message | default('Ansible automated update') }}"
+        add: ["."]
+        url: >-
+          {{
+            'https://' ~ (gitlab_push_repository_token_user | urlencode) ~ ":" ~ (gitlab_push_repository_token | urlencode) ~ '@' ~ gitlab_push_repository_url
+            if gitlab_push_repository_token | default('', true) | length > 0
+            else 'https://' ~ gitlab_push_repository_url
+          }}
+      environment:
+        GIT_AUTHOR_NAME: "ansible-automation"
+        GIT_AUTHOR_EMAIL: "ansible-automation@cd-cluster.com"
+        GIT_COMMITTER_NAME: "ansible-automation"
+        GIT_COMMITTER_EMAIL: "ansible-automation@cd-cluster.com"
+        GIT_SSL_NO_VERIFY: "{{ 'true' if gitlab_push_repository_verify_remote_server | default(false, true) else 'false' }}"
+      register: gitlab_push_repository_git_acp_result
+
+    - name: Push with Tag
+      when: (gitlab_push_repository_tag) != ''
+      block:
+        - name: Create local tag
+          # noqa: command-instead-of-module
+          ansible.builtin.command: "git tag {{ gitlab_push_repository_tag }}"
+          args:
+            chdir: "{{ gitlab_push_repository_src_path }}"
+          register: gitlab_push_repository_tag_command
+          # Check if the tag already exists locally
+          changed_when: "'already exists' not in gitlab_push_repository_tag_command.stderr"
+          failed_when:
+            - gitlab_push_repository_tag_command.rc != 0
+            - "'already exists' not in gitlab_push_repository_tag_command.stderr"
+
+        - name: Push tag to remote
+          # noqa: command-instead-of-module
+          ansible.builtin.command: "git push origin {{ gitlab_push_repository_tag }}"
+          args:
+            chdir: "{{ gitlab_push_repository_src_path }}"
+          register: gitlab_push_repository_push_command
+          # Only report 'changed' if the output does not say everything was already up to date
+          changed_when: "'Everything up-to-date' not in gitlab_push_repository_push_command.stderr"
+
+  rescue:
+    - name: "[ERROR] Record the exact task failure stderr"
+      ansible.builtin.set_fact:
+        gitlab_push_repository_failure_message: >-
+          {{
+            ansible_failed_result.stderr | default(None) or
+            ansible_failed_result.stdout | default(None) or
+            ansible_failed_result.msg | default('An unknown error occurred.')
+          }}
+
+    - name: "[ERROR] Identify the specific failure type"
+      ansible.builtin.set_fact:
+        gitlab_push_repository_failure_category: >-
+          {%- if 'Authentication failed' in gitlab_push_repository_failure_message or '403' in gitlab_push_repository_failure_message -%}
+            bad_credentials
+          {%- elif 'rejected' in gitlab_push_repository_failure_message or 'non-fast-forward' in gitlab_push_repository_failure_message -%}
+            branch_conflict
+          {%- elif 'already exists' in gitlab_push_repository_failure_message -%}
+            tag_already_exists
+          {%- elif 'fatal: not a git repository (or any of the parent directories): .git' in gitlab_push_repository_failure_message -%}
+            not_git_repo
+          {%- else -%}
+            unclassified_error
+          {%- endif -%}
+
+    - name: "[ERROR] Fail the task"
+      ansible.builtin.fail:
+        msg: "The role failed because GitLab push failed using git_acp module."
+
+  always:
+    - name: "[INFO] Construct the Generic Role Output Object"
+      ansible.builtin.set_fact:
+        gitlab_push_repository_role_output:
+          role_name: "{{ role_name }}"
+          failure_message: "{{ gitlab_push_repository_failure_message }}"
+          failure_category: "{{ gitlab_push_repository_failure_category }}"
+          files:
+            modified: "{{ gitlab_push_repository_tracked_files_modified }}"
+            deleted: "{{ gitlab_push_repository_tracked_files_deleted }}"
+            created: "{{ gitlab_push_repository_tracked_files_created }}"
+          variables: "{{ gitlab_push_repository_tracked_custom_facts }}"
+
+    - name: "[INFO] Print the generic output object"
+      ansible.builtin.debug:
+        var: gitlab_push_repository_role_output
