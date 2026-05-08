@@ -1,0 +1,20 @@
+---
+# Default variables for gitlab_clone_repository role
+
+# The specific project path on GitLab (e.g., 'gitlab.com/group-name/project-name.git')
+gitlab_clone_repository_repo_url: ""
+
+# The physical path on the target server where the repo will be cloned
+gitlab_clone_repository_dest_path: "/var/www/application"
+
+# Target branch, tag, or commit hash to checkout
+gitlab_clone_repository_version: "main"
+
+# The username associated with your access token (defaults to 'oauth2' for GitLab PATs)
+gitlab_clone_repository_token_user: "oauth2"
+
+# Set to true to bypass SSL certificate verification for self-hosted GitLab instances
+gitlab_clone_repository_verify_remote_server: false
+
+# The private access token or deploy token (keep empty if cloning a public repo)
+gitlab_clone_repository_token: ""
