@@ -1,0 +1,24 @@
+---
+# defaults file for push_image_to_registry_cosign
+
+# The local directory path containing the container files to be loaded
+push_image_to_registry_cosign_src: ""
+
+# The container name/path within the registry
+push_image_to_registry_cosign_image_name: ""
+
+# The version or tag for the image
+push_image_to_registry_cosign_image_tag: "latest"
+
+# The base URL of the container registry (e.g., index.docker.io)
+push_image_to_registry_cosign_registry_url: ""
+
+# The specific URL used for the 'cosign login' command
+push_image_to_registry_cosign_registry_login_url: ""
+
+# Credentials for registry authentication
+push_image_to_registry_cosign_registry_username: ""
+push_image_to_registry_cosign_registry_password: ""
+
+# Whether to verify the remote server TLS certificate
+push_image_to_registry_cosign_ssl_verify: false

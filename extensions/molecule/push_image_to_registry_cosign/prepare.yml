@@ -1,0 +1,39 @@
+---
+- name: Prepare
+  hosts: instance
+  gather_facts: false
+  tasks:
+    - name: Install tools on Alpine
+      ansible.builtin.command: apk add --no-cache tar gzip
+      changed_when: true
+
+    - name: Install Cosign binary
+      ansible.builtin.get_url:
+        url: "https://github.com/sigstore/cosign/releases/latest/download/cosign-linux-amd64"
+        dest: "/usr/local/bin/cosign"
+        mode: "0755"
+        owner: root
+        group: root
+      become: true
+
+    - name: "Download sample redis image (Image is signed by Cosign)"
+      ansible.builtin.get_url:
+        url: "{{ push_image_to_registry_cosign_secret_sample_image_url }}"
+        dest: "/tmp/redis.tar.gz"
+        headers:
+          X-Appwrite-Project: "{{ push_image_to_registry_cosign_secret_api_key }}"
+          X-Appwrite-Key: "{{ push_image_to_registry_cosign_secret_api_secret }}"
+        mode: "0644"
+
+    - name: Ensure destination directory exists
+      ansible.builtin.file:
+        path: "/tmp/redis"
+        state: directory
+        mode: "0755"
+
+    - name: Extract the downloaded tar file
+      ansible.builtin.unarchive:
+        src: "/tmp/redis.tar.gz"
+        dest: "/tmp/redis"
+        remote_src: true
+        mode: "0755"

@@ -17,6 +17,10 @@ jobs:
     env:
       gitlab_clone_repository_secret_pat: ${{ secrets.gitlab_clone_repository_secret_pat }}
       gitlab_push_repository_secret_pat: ${{ secrets.gitlab_push_repository_secret_pat }}
+      push_image_to_registry_cosign_secret_sample_image_url: ${{ secrets.push_image_to_registry_cosign_secret_sample_image_url }}
+      push_image_to_registry_cosign_secret_api_key: ${{ secrets.push_image_to_registry_cosign_secret_api_key }}
+      push_image_to_registry_cosign_secret_api_secret: ${{ secrets.push_image_to_registry_cosign_secret_api_secret }}
+      push_image_to_registry_cosign_secret_registry_token: ${{ secrets.push_image_to_registry_cosign_secret_registry_token }}
 
     steps:
       - name: Checkout repository

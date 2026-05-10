@@ -1,0 +1,40 @@
+---
+driver:
+  name: docker
+
+ansible:
+  executor:
+    backend: ansible-playbook
+
+provisioner:
+  name: ansible
+  config_options:
+    defaults:
+      # Uses the absolute path of your project to safely find the roles folder
+      roles_path: ${MOLECULE_PROJECT_DIRECTORY}/roles
+      gathering: smart
+      fact_caching: jsonfile
+      fact_caching_connection: /tmp/molecule_facts_cache
+      fact_caching_timeout: 7200
+  inventory:
+    group_vars:
+      all:
+        push_image_to_registry_cosign_secret_sample_image_url: "${push_image_to_registry_cosign_secret_sample_image_url}"
+        push_image_to_registry_cosign_secret_api_key: "${push_image_to_registry_cosign_secret_api_key}"
+        push_image_to_registry_cosign_secret_api_secret: "${push_image_to_registry_cosign_secret_api_secret}"
+        push_image_to_registry_cosign_var_registry_url: "registry.gitlab.com/cd-cluster/write-repository-molecule-test"
+        push_image_to_registry_cosign_secret_registry_token: "${push_image_to_registry_cosign_secret_registry_token}"
+
+platforms:
+  - name: instance
+    image: docker.io/alpine:3.23.3
+    privileged: false
+
+scenario:
+  name: push_image_to_registry_cosign
+  test_sequence:
+    - create
+    - prepare
+    - converge
+    - verify
+    - destroy
