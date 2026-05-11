@@ -1,0 +1,124 @@
+---
+- name: "[INFO] Role Configuration: push_image_to_registry_generic"
+  ansible.builtin.debug:
+    msg:
+      - "Source: {{ push_image_to_registry_generic_src | default('UNDEFINED', true) }}"
+      - "Image Name: {{ push_image_to_registry_generic_image_name | default('UNDEFINED', true) }}"
+      - "Image Tag: {{ push_image_to_registry_generic_image_tag | default('UNDEFINED', true) }}"
+      - "Registry Push URL: {{ push_image_to_registry_generic_registry_url | default('UNDEFINED', true) }}"
+      - "Username: {{ push_image_to_registry_generic_registry_username | default('UNDEFINED', true) }}"
+      - "SSL Verify: {{ push_image_to_registry_generic_ssl_verify | default('UNDEFINED', true) }}"
+      - "Password: {{ '[MASKED]' if (push_image_to_registry_generic_registry_password | default('', true)) != '' else 'UNDEFINED' }}"
+
+- name: "[INFO] Sanitize input variables"
+  ansible.builtin.set_fact:
+    # Strings and Pathing
+    push_image_to_registry_generic_src: "{{ push_image_to_registry_generic_src | default('', true) | string }}"
+    push_image_to_registry_generic_image_name: "{{ push_image_to_registry_generic_image_name | default('', true) | string | lower }}"
+    push_image_to_registry_generic_image_tag: "{{ push_image_to_registry_generic_image_tag | default('latest', true) | string | lower }}"
+    push_image_to_registry_generic_registry_url: "{{ push_image_to_registry_generic_registry_url | default('', true) | string | lower | trim('/') }}"
+    push_image_to_registry_generic_registry_username: "{{ push_image_to_registry_generic_registry_username | default('', true) | string }}"
+    push_image_to_registry_generic_registry_password: "{{ push_image_to_registry_generic_registry_password | default('', true) | string }}"
+    push_image_to_registry_generic_ssl_verify: "{{ push_image_to_registry_generic_ssl_verify | default(true, true) | bool }}"
+
+- name: "[INFO] Initialize role tracking variables"
+  ansible.builtin.set_fact:
+    push_image_to_registry_generic_tracked_files_modified: []
+    push_image_to_registry_generic_tracked_files_deleted: []
+    push_image_to_registry_generic_tracked_files_created: []
+    push_image_to_registry_generic_tracked_custom_facts: {}
+    push_image_to_registry_generic_failure_message: ""
+    push_image_to_registry_generic_failure_category: ""
+
+- name: Manage Skopeo Push
+  block:
+    - name: Login to Registry with Skopeo
+      ansible.builtin.command:
+        cmd: >-
+          skopeo login {{ push_image_to_registry_generic_registry_url }}
+          -u {{ push_image_to_registry_generic_registry_username }}
+          --password-stdin
+          --tls-verify={{ push_image_to_registry_generic_ssl_verify | lower }}
+        stdin: "{{ push_image_to_registry_generic_registry_password }}"
+      register: push_image_to_registry_generic_skopeo_login_result
+      changed_when: push_image_to_registry_generic_skopeo_login_result.rc == 0
+      no_log: true
+
+    - name: Push image using Skopeo
+      # yamllint disable rule:line-length
+      ansible.builtin.command:
+        cmd: >-
+          skopeo copy
+          --format oci
+          --src-tls-verify={{ push_image_to_registry_generic_ssl_verify | lower }}
+          --dest-tls-verify={{ push_image_to_registry_generic_ssl_verify | lower }}
+          oci:{{ push_image_to_registry_generic_src }}
+          docker://{{ push_image_to_registry_generic_registry_url }}{% if push_image_to_registry_generic_image_name | length > 0 %}/{{ push_image_to_registry_generic_image_name }}{% endif %}:{{ push_image_to_registry_generic_image_tag }}
+      register: push_image_to_registry_generic_skopeo_copy_result
+      changed_when: push_image_to_registry_generic_skopeo_copy_result.rc == 0
+
+    - name: "[INFO] Update custom facts with operation output"
+      ansible.builtin.set_fact:
+        push_image_to_registry_generic_tracked_custom_facts:
+          skopeo_login:
+            output: "{{ push_image_to_registry_generic_skopeo_login_result.stdout | default('HIDDEN') }}"
+          skopeo_copy:
+            output: "{{ push_image_to_registry_generic_skopeo_copy_result.stdout }}"
+            error: "{{ push_image_to_registry_generic_skopeo_copy_result.stderr }}"
+
+  rescue:
+    - name: "[ERROR] Record the exact task failure"
+      ansible.builtin.set_fact:
+        push_image_to_registry_generic_failure_message: >-
+          {{
+            ansible_failed_result.stderr | default(None) or
+            ansible_failed_result.stdout | default(None) or
+            ansible_failed_result.msg | default('An unknown error occurred.')
+          }}
+
+    - name: "[INFO] Add deleted files to parent tracking list"
+      ansible.builtin.set_fact:
+        push_image_to_registry_generic_tracked_files_deleted: >-
+          {{
+            push_image_to_registry_generic_tracked_files_deleted | default([]) + ['~/.docker/config.json']
+          }}
+
+    - name: "[ERROR] Identify failure category"
+      ansible.builtin.set_fact:
+        push_image_to_registry_generic_failure_category: >-
+          {%- set msg = push_image_to_registry_generic_failure_message.lower() -%}
+          {%- if 'invalid username/password' in msg -%}
+            bad_credentials
+          {%- elif 'connection refused' in msg or 'no such host' in msg or 'unreachable' in msg -%}
+            network_issue
+          {%- elif 'no such file or directory' in msg -%}
+            missing_source
+          {%- else -%}
+            unclassified_error
+          {%- endif -%}
+
+    - name: "[ERROR] Fail the task"
+      ansible.builtin.fail:
+        msg: "The role failed because the Skopeo operation was unsuccessful."
+
+  always:
+    - name: "[INFO] Ensure registry credential is deleted"
+      ansible.builtin.file:
+        path: "~/.docker/config.json"
+        state: absent
+
+    - name: "[INFO] Construct Generic Role Output"
+      ansible.builtin.set_fact:
+        push_image_to_registry_generic_role_output:
+          role_name: "push_image_to_registry_generic"
+          failure_message: "{{ push_image_to_registry_generic_failure_message }}"
+          failure_category: "{{ push_image_to_registry_generic_failure_category }}"
+          files:
+            modified: "{{ push_image_to_registry_generic_tracked_files_modified }}"
+            deleted: "{{ push_image_to_registry_generic_tracked_files_deleted }}"
+            created: "{{ push_image_to_registry_generic_tracked_files_created }}"
+          variables: "{{ push_image_to_registry_generic_tracked_custom_facts }}"
+
+    - name: "[INFO] Print the generic output object"
+      ansible.builtin.debug:
+        var: push_image_to_registry_generic_role_output
