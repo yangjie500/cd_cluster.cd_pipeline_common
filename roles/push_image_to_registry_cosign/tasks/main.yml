@@ -42,6 +42,7 @@
         stdin: "{{ push_image_to_registry_cosign_registry_password }}"
       register: push_image_to_registry_cosign_cosign_login_result
       changed_when: push_image_to_registry_cosign_cosign_login_result.rc == 0
+      no_log: true
 
     - name: Push (Load) image to registry
       # yamllint disable rule:line-length
@@ -97,6 +98,13 @@
       ansible.builtin.file:
         path: "~/.docker/config.json"
         state: absent
+
+    - name: "[INFO] Add deleted files to parent tracking list"
+      ansible.builtin.set_fact:
+        push_image_to_registry_cosign_tracked_files_deleted: >-
+          {{
+            push_image_to_registry_cosign_tracked_files_deleted | default([]) + ['~/.docker/config.json']
+          }}
 
     - name: "[INFO] Construct the Generic Role Output Object"
       ansible.builtin.set_fact:
