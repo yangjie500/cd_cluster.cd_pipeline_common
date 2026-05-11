@@ -1,0 +1,3 @@
+---
+major_changes:
+  - added roles to push container images to remote registry using skopeo binary (Must be OCI Compliant)
