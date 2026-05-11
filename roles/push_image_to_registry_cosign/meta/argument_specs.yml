@@ -1,0 +1,45 @@
+---
+argument_specs:
+  main:
+    short_description: "Push images to a registry using Cosign"
+    options:
+      push_image_to_registry_cosign_src:
+        type: str
+        required: true
+        description: "Source directory containing the container files"
+
+      push_image_to_registry_cosign_image_name:
+        type: str
+        default: ""
+        description: "Name of the container image"
+
+      push_image_to_registry_cosign_image_tag:
+        type: str
+        default: "latest"
+        description: "Tag for the container image"
+
+      push_image_to_registry_cosign_registry_url:
+        type: str
+        required: true
+        description: "The registry URL for pushing the image"
+
+      push_image_to_registry_cosign_registry_login_url:
+        type: str
+        required: true
+        description: "The URL used for cosign authentication"
+
+      push_image_to_registry_cosign_registry_username:
+        type: str
+        required: true
+        description: "Username for registry authentication"
+
+      push_image_to_registry_cosign_registry_password:
+        type: str
+        required: true
+        no_log: true
+        description: "Password/Token for registry authentication"
+
+      push_image_to_registry_cosign_ssl_verify:
+        type: bool
+        default: false
+        description: "Verify remote server TLS certificates"

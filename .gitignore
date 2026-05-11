@@ -171,3 +171,6 @@ collections
 
 # Ignore Docsible metadata
 .docsible
+
+# Ignore custom script
+load-secrets.sh

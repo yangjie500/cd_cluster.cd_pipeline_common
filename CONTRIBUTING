@@ -20,6 +20,11 @@ pip3 install ansible-dev-tools
 pip3 install molecule-plugins[docker]
 pip install pre-commit
 sudo dnf install -y rsync
+
+# Install Cosign
+curl -O -L "https://github.com/sigstore/cosign/releases/latest/download/cosign-linux-amd64"
+sudo mv cosign-linux-amd64 /usr/local/bin/cosign
+sudo chmod +x /usr/local/bin/cosign
 ```
 
 - OR just install the test-requirements.txt and test-requirments.yml

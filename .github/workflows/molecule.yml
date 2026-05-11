@@ -17,6 +17,10 @@ jobs:
     env:
       gitlab_clone_repository_secret_pat: ${{ secrets.gitlab_clone_repository_secret_pat }}
       gitlab_push_repository_secret_pat: ${{ secrets.gitlab_push_repository_secret_pat }}
+      sample_image_created_by_cosign_url: ${{ secrets.sample_image_created_by_cosign_url }}
+      s3_api_key: ${{ secrets.s3_api_key }}
+      s3_api_secret: ${{ secrets.s3_api_secret }}
+      gitlab_registry_token: ${{ secrets.gitlab_registry_token }}
 
     steps:
       - name: Checkout repository
