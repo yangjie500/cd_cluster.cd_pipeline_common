@@ -1,0 +1,43 @@
+---
+# meta/argument_specs.yml for push_image_to_registry_generic
+argument_specs:
+  main:
+    short_description: "Pushes an OCI image to a registry using Skopeo"
+    description:
+      - "This role handles registry authentication via Skopeo login and performs a 'skopeo copy' from a local OCI directory to a remote registry."
+      - "It follows a standardized output pattern, returning a structured result object."
+    options:
+      push_image_to_registry_generic_src:
+        type: str
+        required: true
+        description: "Path to the local directory containing the OCI image."
+
+      push_image_to_registry_generic_image_name:
+        type: str
+        required: true
+        description: "The name of the image in the target registry."
+
+      push_image_to_registry_generic_image_tag:
+        type: str
+        default: "latest"
+        description: "The tag to assign to the pushed image."
+
+      push_image_to_registry_generic_registry_url:
+        type: str
+        required: true
+        description: "The registry URL (e.g., 'ghcr.io' or 'my-registry.com')."
+
+      push_image_to_registry_generic_registry_username:
+        type: str
+        required: true
+        description: "Username for registry authentication."
+
+      push_image_to_registry_generic_registry_password:
+        type: str
+        required: true
+        description: "Password or Token for registry authentication."
+
+      push_image_to_registry_generic_ssl_verify:
+        type: bool
+        default: true
+        description: "Whether to enable SSL/TLS certificate verification during login and copy."

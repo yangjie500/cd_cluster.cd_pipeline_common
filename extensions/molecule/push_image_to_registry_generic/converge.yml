@@ -1,0 +1,201 @@
+- name: "Converge (Success: Push image using skopeo binary to Gitlab Registry)"
+  hosts: instance
+  gather_facts: true
+  tasks:
+    - name: Locate the index.json file
+      ansible.builtin.find:
+        paths: "/tmp/redis-podman" # The base directory the tar is extracted
+        patterns: "index.json"
+        recurse: true
+      register: found_files
+
+    - name: Set parent directory as a fact
+      ansible.builtin.set_fact:
+        oci_root_path: "{{ found_files.files[0].path | dirname }}"
+      when: found_files.matched > 0
+
+    - name: Debug the OCI root path
+      ansible.builtin.debug:
+        msg: "The OCI parent folder is {{ oci_root_path }}"
+
+    - name: "Test push image to registry using Skopeo"
+      ansible.builtin.include_role:
+        name: "push_image_to_registry_generic"
+      vars:
+        push_image_to_registry_generic_src: "{{ oci_root_path }}"
+        push_image_to_registry_generic_image_name: "my-redis"
+        push_image_to_registry_generic_image_tag: "1.2.0"
+        push_image_to_registry_generic_registry_url: "{{ push_image_to_registry_generic_var_registry_url }}"
+        push_image_to_registry_generic_registry_username: "test-user"
+        push_image_to_registry_generic_registry_password: "{{ push_image_to_registry_generic_secret_registry_token }}"
+        push_image_to_registry_generic_ssl_verify: true
+
+- name: "Verify (Success: Push image using Skopeo binary to Gitlab Registry)"
+  hosts: all
+  gather_facts: false
+  tasks:
+    - name: Verify image existence via skopeo inspect
+      ansible.builtin.command:
+        cmd: >-
+          skopeo inspect
+          docker://{{ push_image_to_registry_generic_var_registry_url }}/my-redis:1.2.0
+      register: push_image_to_registry_generic_inspect_result
+      changed_when: false
+
+    - name: "[Cleanup] Delete the pushed image from the registry"
+      # yamllint disable rule:line-length
+      ansible.builtin.uri:
+        url: "https://gitlab.com/api/v4/projects/81950682/registry/repositories/11413232/tags/1.2.0"
+        method: DELETE
+        headers:
+          PRIVATE-TOKEN: "{{ push_image_to_registry_generic_secret_registry_token }}"
+        status_code: [200]
+        validate_certs: true
+
+- name: "Converge (Success: Push image using skopeo binary to Gitlab Registry without using image_name)"
+  hosts: instance
+  gather_facts: true
+  tasks:
+    - name: Locate the index.json file
+      ansible.builtin.find:
+        paths: "/tmp/redis-podman" # The base directory the tar is extracted
+        patterns: "index.json"
+        recurse: true
+      register: found_files
+
+    - name: Set parent directory as a fact
+      ansible.builtin.set_fact:
+        oci_root_path: "{{ found_files.files[0].path | dirname }}"
+      when: found_files.matched > 0
+
+    - name: Debug the OCI root path
+      ansible.builtin.debug:
+        msg: "The OCI parent folder is {{ oci_root_path }}"
+
+    - name: "Test push image to registry using Skopeo"
+      ansible.builtin.include_role:
+        name: "push_image_to_registry_generic"
+      vars:
+        push_image_to_registry_generic_src: "{{ oci_root_path }}"
+        push_image_to_registry_generic_image_name: ""
+        push_image_to_registry_generic_image_tag: "1.2.0"
+        push_image_to_registry_generic_registry_url: "{{ push_image_to_registry_generic_var_registry_url }}/my-redis"
+        push_image_to_registry_generic_registry_username: "test-user"
+        push_image_to_registry_generic_registry_password: "{{ push_image_to_registry_generic_secret_registry_token }}"
+        push_image_to_registry_generic_ssl_verify: true
+
+- name: "Verify (Success: Push image using Skopeo binary to Gitlab Registry without using image_name)"
+  hosts: all
+  gather_facts: false
+  tasks:
+    - name: Verify image existence via skopeo inspect
+      ansible.builtin.command:
+        cmd: >-
+          skopeo inspect
+          docker://{{ push_image_to_registry_generic_var_registry_url }}/my-redis:1.2.0
+      register: push_image_to_registry_generic_inspect_result
+      changed_when: false
+
+    - name: "[Cleanup] Delete the pushed image from the registry"
+      # yamllint disable rule:line-length
+      ansible.builtin.uri:
+        url: "https://gitlab.com/api/v4/projects/81950682/registry/repositories/11413232/tags/1.2.0"
+        method: DELETE
+        headers:
+          PRIVATE-TOKEN: "{{ push_image_to_registry_generic_secret_registry_token }}"
+        status_code: [200]
+        validate_certs: true
+
+- name: "Converge (Failure: Push image using Skopeo binary to Gitlab Registry with wrong password)"
+  hosts: instance
+  gather_facts: true
+  tasks:
+    - name: This block will fail with bad_credentials
+      block:
+        - name: Locate the index.json file
+          ansible.builtin.find:
+            paths: "/tmp/redis-podman" # The base directory the tar is extracted
+            patterns: "index.json"
+            recurse: true
+          register: found_files
+
+        - name: Set parent directory as a fact
+          ansible.builtin.set_fact:
+            oci_root_path: "{{ found_files.files[0].path | dirname }}"
+          when: found_files.matched > 0
+
+        - name: Debug the OCI root path
+          ansible.builtin.debug:
+            msg: "The OCI parent folder is {{ oci_root_path }}"
+
+        - name: "Test push image to registry using Skopeo"
+          ansible.builtin.include_role:
+            name: "push_image_to_registry_generic"
+          vars:
+            push_image_to_registry_generic_src: "{{ oci_root_path }}"
+            push_image_to_registry_generic_image_name: ""
+            push_image_to_registry_generic_image_tag: "1.2.0"
+            push_image_to_registry_generic_registry_url: "{{ push_image_to_registry_generic_var_registry_url }}/my-redis"
+            push_image_to_registry_generic_registry_username: "test-user"
+            push_image_to_registry_generic_registry_password: "THISISAWRONGPASSWORD"
+            push_image_to_registry_generic_ssl_verify: true
+
+      rescue:
+        - name: Assert that the role threw an error
+          ansible.builtin.assert:
+            that:
+              - push_image_to_registry_generic_role_output.failure_category == "bad_credentials"
+            fail_msg: "The test did not trap the expected role failure."
+
+- name: "Converge (Failure: Push image using Skopeo binary to Gitlab Registry with directory not OCI format)"
+  hosts: instance
+  gather_facts: true
+  tasks:
+    - name: This block will fail with missing_source
+      block:
+        - name: Locate the index.json file
+          ansible.builtin.find:
+            paths: "/tmp/redis-podman" # The base directory the tar is extracted
+            patterns: "index.json"
+            recurse: true
+          register: found_files
+
+        - name: Set parent directory as a fact
+          ansible.builtin.set_fact:
+            oci_root_path: "{{ found_files.files[0].path | dirname }}"
+          when: found_files.matched > 0
+
+        - name: Debug the OCI root path
+          ansible.builtin.debug:
+            msg: "The OCI parent folder is {{ oci_root_path }}"
+
+        - name: "Remove index.json"
+          ansible.builtin.file:
+            path: "{{ found_files.files[0].path }}"
+            state: absent
+
+        - name: "Test push image to registry using Skopeo"
+          ansible.builtin.include_role:
+            name: "push_image_to_registry_generic"
+          vars:
+            push_image_to_registry_generic_src: "{{ oci_root_path }}"
+            push_image_to_registry_generic_image_name: ""
+            push_image_to_registry_generic_image_tag: "1.2.0"
+            push_image_to_registry_generic_registry_url: "{{ push_image_to_registry_generic_var_registry_url }}/my-redis"
+            push_image_to_registry_generic_registry_username: "test-user"
+            push_image_to_registry_generic_registry_password: "{{ push_image_to_registry_generic_secret_registry_token }}"
+            push_image_to_registry_generic_ssl_verify: true
+
+      rescue:
+        - name: Extract the downloaded tar file
+          ansible.builtin.unarchive:
+            src: "/tmp/redis-podman.tar.gz"
+            dest: "/tmp/redis-podman"
+            remote_src: true
+            mode: "0755"
+
+        - name: Assert that the role threw an error
+          ansible.builtin.assert:
+            that:
+              - push_image_to_registry_generic_role_output.failure_category == "missing_source"
+            fail_msg: "The test did not trap the expected role failure."

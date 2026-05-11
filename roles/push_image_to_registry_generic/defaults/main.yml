@@ -1,0 +1,21 @@
+---
+# defaults/main.yml for push_image_to_registry_generic
+
+# Source directory containing the OCI image
+push_image_to_registry_generic_src: ""
+
+# The name of the image as it should appear in the registry
+push_image_to_registry_generic_image_name: ""
+
+# The tag to apply to the image (defaults to 'latest' via sanitization)
+push_image_to_registry_generic_image_tag: "latest"
+
+# The registry URL (e.g., index.docker.io, ghcr.io, or internal registry)
+push_image_to_registry_generic_registry_url: ""
+
+# Credentials for registry authentication
+push_image_to_registry_generic_registry_username: ""
+push_image_to_registry_generic_registry_password: ""
+
+# Whether to verify SSL certificates for both source and destination
+push_image_to_registry_generic_ssl_verify: true
