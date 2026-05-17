@@ -5,7 +5,7 @@
     dest: "{{ ansible_user_dir }}/app_config.txt"
 
 - name: Execute our custom placeholder module
-  cd_cluster.cd_pipeline_common.replace_placeholders:
+  cd_cluster.pipeline_common.replace_placeholders:
     path: "{{ ansible_user_dir }}/app_config.txt"
     placeholders:
       db_host: "10.0.0.99"
