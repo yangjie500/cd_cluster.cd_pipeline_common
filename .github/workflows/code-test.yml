@@ -81,11 +81,11 @@ jobs:
       - name: Read collection metadata
         id: galaxy
         run: |
-          namespace=$(awk '/^namespace:/ {print $2}' source/galaxy.yml)
-          collection=$(awk '/^name:/ {print $2}' source/galaxy.yml)
+          namespace=$(awk '/^namespace:/ {print $2}' source/galaxy.yml | tr -d '"')
+          collection=$(awk '/^name:/ {print $2}' source/galaxy.yml | tr -d '"')
 
-          echo "namespace=${namespace}" >> $GITHUB_OUTPUT
-          echo "collection=${collection}" >> $GITHUB_OUTPUT
+          echo "namespace=${namespace}" >> "$GITHUB_OUTPUT"
+          echo "collection=${collection}" >> "$GITHUB_OUTPUT"
 
       - name: Create collection directory
         run: |
