@@ -1,0 +1,3 @@
+---
+major_changes:
+  - added roles (push_image_to_registry) which chooses between skopeo or cosign and push container images to remote registry (Must be OCI Compliant)
