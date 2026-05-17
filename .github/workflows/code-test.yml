@@ -18,6 +18,10 @@ jobs:
     name: Run Unit Tests
     uses: ansible/ansible-content-actions/.github/workflows/unit.yaml@main
 
+  integration:
+    name: Run Integration Tests
+    uses: ansible/ansible-content-actions/.github/workflows/integration.yaml@main
+
   molecule:
     name: Run Molecule Tests
     runs-on: ubuntu-latest
