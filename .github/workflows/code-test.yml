@@ -57,7 +57,7 @@ jobs:
         run: molecule test --all
 
   ansible-test-integration:
-    name: py${{ matrix.python-version }} / ${{ matrix.ansible-version }}
+    name: Run Integration Tests
     runs-on: ubuntu-latest
 
     strategy:
@@ -84,8 +84,8 @@ jobs:
           namespace=$(awk '/^namespace:/ {print $2}' source/galaxy.yml)
           collection=$(awk '/^name:/ {print $2}' source/galaxy.yml)
 
-          echo "namespace=$namespace" >> $GITHUB_OUTPUT
-          echo "collection=$collection" >> $GITHUB_OUTPUT
+          echo "namespace=${namespace}" >> $GITHUB_OUTPUT
+          echo "collection=${collection}" >> $GITHUB_OUTPUT
 
       - name: Create collection directory
         run: |
