@@ -1,0 +1,2 @@
+[testgroup]
+testhost ansible_connection='local' ansible_pipelining='yes' ansible_python_interpreter='/root/cd_cluster.cd_pipeline_common/custom-venv/bin/python'
