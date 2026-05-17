@@ -1,0 +1,156 @@
+- name: "[INFO] Role Configuration: push_image_to_registry"
+  ansible.builtin.debug:
+    msg:
+      - "Source: {{ push_image_to_registry_src | default('UNDEFINED', true) }}"
+      - "Image Name: {{ push_image_to_registry_image_name | default('UNDEFINED', true) }}"
+      - "Image Tag: {{ push_image_to_registry_image_tag | default('UNDEFINED', true) }}"
+      - "Registry Login URL: {{ push_image_to_registry_registry_login_url | default('UNDEFINED', true) }}"
+      - "Registry Push URL: {{ push_image_to_registry_registry_url | default('UNDEFINED', true) }}"
+      - "Username: {{ push_image_to_registry_registry_username | default('UNDEFINED', true) }}"
+      - "SSL Verify: {{ push_image_to_registry_ssl_verify | default('UNDEFINED', true) }}"
+      - "Password: {{ '[MASKED]' if (push_image_to_registry_registry_password | default('', true)) != '' else 'UNDEFINED' }}"
+
+- name: "[INFO] Sanitize input variables"
+  ansible.builtin.set_fact:
+    push_image_to_registry_src: "{{ push_image_to_registry_src | default('', true) | string }}"
+    push_image_to_registry_image_name: "{{ push_image_to_registry_image_name | default('', true) | string | lower }}"
+    push_image_to_registry_image_tag: "{{ push_image_to_registry_image_tag | default('latest', true) | string | lower }}"
+    push_image_to_registry_registry_url: "{{ push_image_to_registry_registry_url | default('', true) | string | lower | trim('/') }}"
+    push_image_to_registry_registry_login_url: "{{ push_image_to_registry_registry_login_url | default(push_image_to_registry_registry_url, true) | string }}"
+    push_image_to_registry_registry_username: "{{ push_image_to_registry_registry_username | default('', true) | string }}"
+    push_image_to_registry_registry_password: "{{ push_image_to_registry_registry_password | default('', true) | string }}"
+    push_image_to_registry_ssl_verify: "{{ push_image_to_registry_ssl_verify | default(true, true) | bool }}"
+
+- name: "[INFO] Initialize role tracking variables"
+  ansible.builtin.set_fact:
+    push_image_to_registry_tracked_files_modified: []
+    push_image_to_registry_tracked_files_deleted: []
+    push_image_to_registry_tracked_files_created: []
+    push_image_to_registry_tracked_custom_facts: {}
+    push_image_to_registry_failure_message: ""
+    push_image_to_registry_failure_category: ""
+
+- name: Push OCI-Compliant Image to Registry
+  block:
+    - name: Load index.json from source
+      ansible.builtin.slurp:
+        src: "{{ push_image_to_registry_src }}/index.json"
+      register: push_image_to_registry_index_raw
+
+    - name: Parse index.json facts
+      ansible.builtin.set_fact:
+        push_image_to_registry_index_content: "{{ push_image_to_registry_index_raw.content | b64decode | from_json }}"
+
+    - name: "Strategy: Evaluate which binary to push images to registry"
+      ansible.builtin.set_fact:
+        push_image_to_registry_is_cosign: >-
+          {{
+            (push_image_to_registry_index_content.manifests | length == 2)
+            and (push_image_to_registry_index_content.manifests
+              | selectattr('annotations.kind', 'defined')
+              | selectattr('annotations.kind', 'equalto', 'dev.cosignproject.cosign/image')
+              | list | length > 0)
+          }}
+
+    - name: "Push OCI-Compliant Image to Registry (Cosign)"
+      ansible.builtin.include_role:
+        name: push_image_to_registry_cosign
+      vars:
+        push_image_to_registry_cosign_src: "{{ push_image_to_registry_src }}"
+        push_image_to_registry_cosign_image_name: "{{ push_image_to_registry_image_name }}"
+        push_image_to_registry_cosign_image_tag: "{{ push_image_to_registry_image_tag }}"
+        push_image_to_registry_cosign_registry_login_url: "{{ push_image_to_registry_registry_login_url }}"
+        push_image_to_registry_cosign_registry_url: "{{ push_image_to_registry_registry_url }}"
+        push_image_to_registry_cosign_registry_username: "{{ push_image_to_registry_registry_username }}"
+        push_image_to_registry_cosign_registry_password: "{{ push_image_to_registry_registry_password }}"
+        push_image_to_registry_cosign_ssl_verify: "{{ push_image_to_registry_ssl_verify }}"
+      when: push_image_to_registry_is_cosign | bool
+
+    - name: "Push OCI-Compliant Image to Registry (Skopeo)"
+      ansible.builtin.include_role:
+        name: push_image_to_registry_generic
+      vars:
+        push_image_to_registry_generic_src: "{{ push_image_to_registry_src }}"
+        push_image_to_registry_generic_image_name: "{{ push_image_to_registry_image_name }}"
+        push_image_to_registry_generic_image_tag: "{{ push_image_to_registry_image_tag }}"
+        push_image_to_registry_generic_registry_url: "{{ push_image_to_registry_registry_url }}"
+        push_image_to_registry_generic_registry_username: "{{ push_image_to_registry_registry_username }}"
+        push_image_to_registry_generic_registry_password: "{{ push_image_to_registry_registry_password }}"
+        push_image_to_registry_generic_ssl_verify: "{{ push_image_to_registry_ssl_verify }}"
+      when: not (push_image_to_registry_is_cosign | bool)
+
+  rescue:
+    - name: "[ERROR] Record failure details (Orchestrator or Sub-role)"
+      ansible.builtin.set_fact:
+        push_image_to_registry_failure_message: >-
+          {%- if push_image_to_registry_cosign_role_output.failure_message | default('') != '' -%}
+            {{ push_image_to_registry_cosign_role_output.failure_message }}
+          {%- elif push_image_to_registry_generic_role_output.failure_message | default('') != '' -%}
+            {{ push_image_to_registry_generic_role_output.failure_message }}
+          {%- else -%}
+            {{
+              ansible_failed_result.stderr | default(None) or
+              ansible_failed_result.stdout | default(None) or
+              ansible_failed_result.msg | default('An unexpected orchestrator error occurred.')
+            }}
+          {%- endif -%}
+
+    - name: "[ERROR] Identify the specific failure type (Orchestrator or Sub-role)"
+      ansible.builtin.set_fact:
+        push_image_to_registry_failure_category: >-
+          {%- if push_image_to_registry_cosign_role_output.failure_category | default('') != '' -%}
+            {{ push_image_to_registry_cosign_role_output.failure_category }}
+          {%- elif push_image_to_registry_generic_role_output.failure_category | default('') != '' -%}
+            {{ push_image_to_registry_generic_role_output.failure_category }}
+          {%- else -%}
+            orchestrator_preflight_failure
+          {%- endif -%}
+
+    - name: "[ERROR] Fail the orchestrator task"
+      ansible.builtin.fail:
+        msg: "The orchestrator role failed"
+
+  always:
+    - name: "[INFO] Construct the Generic Role Output Object"
+      ansible.builtin.set_fact:
+        push_image_to_registry_role_output:
+          role_name: "{{ role_name }}"
+          push_method: "{{ 'cosign' if (push_image_to_registry_is_cosign | default(false) | bool) else 'generic' }}"
+          failure_message: "{{ push_image_to_registry_failure_message }}"
+          failure_category: "{{ push_image_to_registry_failure_category }}"
+          # Aggregated results from sub-roles if they successfully executed
+          sub_role_output: >-
+            {{
+              push_image_to_registry_cosign_role_output | default(None) or
+              push_image_to_registry_generic_role_output | default({})
+            }}
+          files:
+            modified: >-
+              {{ (push_image_to_registry_tracked_files_modified +
+                  (push_image_to_registry_cosign_role_output.files.modified | default([])) +
+                  (push_image_to_registry_generic_role_output.files.modified | default([]))) | unique | list }}
+            deleted: >-
+              {{ (push_image_to_registry_tracked_files_deleted +
+                  (push_image_to_registry_cosign_role_output.files.deleted | default([])) +
+                  (push_image_to_registry_generic_role_output.files.deleted | default([]))) | unique | list }}
+            created: >-
+              {{ (push_image_to_registry_tracked_files_created +
+                  (push_image_to_registry_cosign_role_output.files.created | default([])) +
+                  (push_image_to_registry_generic_role_output.files.created | default([]))) | unique | list }}
+          variables: >-
+            {{
+              push_image_to_registry_tracked_custom_facts | combine(
+                push_image_to_registry_cosign_role_output.variables | default({}),
+                push_image_to_registry_generic_role_output.variables | default({}),
+                recursive=True
+              )
+            }}
+
+    - name: "[INFO] Clear sub-role output variables to prevent leakage"
+      ansible.builtin.set_fact:
+        push_image_to_registry_cosign_role_output: !!null
+        push_image_to_registry_generic_role_output: !!null
+
+    - name: "[INFO] Print the generic output object"
+      ansible.builtin.debug:
+        var: push_image_to_registry_role_output

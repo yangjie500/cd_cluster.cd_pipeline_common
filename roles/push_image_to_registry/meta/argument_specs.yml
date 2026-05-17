@@ -1,0 +1,50 @@
+---
+# meta/argument_specs.yml for push_image_to_registry (Orchestrator)
+argument_specs:
+  main:
+    short_description: "Orchestrates OCI image pushing by routing to Cosign or Skopeo sub-roles."
+    description:
+      - "Inspects the 'index.json' file of a local OCI image layout."
+      - "Routes to 'push_image_to_registry_cosign' if Cosign annotations are present."
+      - "Routes to 'push_image_to_registry_generic' (Skopeo) if no special annotations are found."
+      - "Aggregates files modified/deleted/created and execution outputs into a structured result."
+    options:
+      push_image_to_registry_src:
+        type: str
+        required: true
+        description: "Path to the local directory containing the OCI image layout and index.json."
+
+      push_image_to_registry_image_name:
+        type: str
+        required: true
+        description: "The name of the image as it should be published in the target registry."
+
+      push_image_to_registry_image_tag:
+        type: str
+        default: "latest"
+        description: "The tag to apply to the pushed image."
+
+      push_image_to_registry_registry_url:
+        type: str
+        required: true
+        description: "The main registry target URL or repository path (e.g., 'ghcr.io/my-org')."
+
+      push_image_to_registry_registry_login_url:
+        type: str
+        required: false
+        description: "The authentication endpoint URL (e.g., 'ghcr.io'). Defaults to registry_url if unconfigured."
+
+      push_image_to_registry_registry_username:
+        type: str
+        required: true
+        description: "Username required to authenticate against the registry endpoints."
+
+      push_image_to_registry_registry_password:
+        type: str
+        required: true
+        description: "Password or Access Token used to authenticate against the registry endpoints."
+
+      push_image_to_registry_ssl_verify:
+        type: bool
+        default: true
+        description: "Enforces or disables SSL/TLS validation checks for registry interactions."

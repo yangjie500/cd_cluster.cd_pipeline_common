@@ -1,0 +1,25 @@
+---
+# defaults/main.yml for push_image_to_registry (Orchestrator)
+
+# Path to the local directory containing the OCI image and index.json
+push_image_to_registry_src: ""
+
+# The name of the image as it should appear in the destination registry
+push_image_to_registry_image_name: ""
+
+# The tag to apply to the image (e.g., '1.2.0' or 'latest')
+push_image_to_registry_image_tag: "latest"
+
+# The registry URL for the push operation (e.g., 'my-registry.com')
+push_image_to_registry_registry_url: ""
+
+# The registry URL for authentication (e.g., 'https://my-registry.com')
+# If left empty, the orchestrator logic can default this to registry_url
+push_image_to_registry_registry_login_url: ""
+
+# Credentials for registry authentication
+push_image_to_registry_registry_username: ""
+push_image_to_registry_registry_password: ""
+
+# Whether to verify SSL/TLS certificates during the push operations
+push_image_to_registry_ssl_verify: true
