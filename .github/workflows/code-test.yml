@@ -98,7 +98,7 @@ jobs:
             ${COLLECTIONS_PATH}/ansible_collections/${{ steps.galaxy.outputs.namespace }}/${{ steps.galaxy.outputs.collection }}
 
       - name: Run ansible-test integration
-        uses: ./source/.github/actions/ansible-test-integration
+        uses: ansible-network/github_actions/.github/actions/ansible_test_integration@main
         with:
           collection_path: >-
             /home/runner/collections/ansible_collections/${{ steps.galaxy.outputs.namespace }}/${{ steps.galaxy.outputs.collection }}
