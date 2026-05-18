@@ -6,15 +6,6 @@
 
 from __future__ import absolute_import, division, print_function
 
-import io
-import os
-import re
-
-from ansible.module_utils.basic import AnsibleModule
-
-
-__metaclass__ = type
-
 DOCUMENTATION = r"""
 ---
 module: replace_placeholders
@@ -97,6 +88,14 @@ backup_file:
   type: str
   returned: when backup=true and changes were made
 """
+
+import io
+import os
+import re
+
+from ansible.module_utils.basic import AnsibleModule
+
+__metaclass__ = type
 
 
 def build_pattern(key: str, whole_word: bool, jinja_tokens: bool, flags: int) -> re.Pattern:
