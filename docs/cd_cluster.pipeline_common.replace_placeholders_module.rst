@@ -253,4 +253,4 @@ Status
 Authors
 ~~~~~~~
 
-- Yang Jie
+- Yang Jie (@yangjie500)
