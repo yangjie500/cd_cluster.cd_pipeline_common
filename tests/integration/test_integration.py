@@ -14,6 +14,5 @@
 #     proc = molecule_scenario.test()
 #     assert proc.returncode == 0
 
-##############################################################################
-##### Intentionally left commented to test using molecule binary instead ##### # noqa: E266
-##############################################################################
+
+# Intentionally left commented to test using molecule binary instead
