@@ -1,0 +1,19 @@
+---
+- name: Setup a temporary workspace file
+  ansible.builtin.copy:
+    content: "My database endpoint is <db_host>."
+    dest: "{{ ansible_user_dir }}/app_config.txt"
+    mode: "0644"
+
+- name: Execute our custom placeholder module
+  cd_cluster.pipeline_common.replace_placeholders:
+    path: "{{ ansible_user_dir }}/app_config.txt"
+    placeholders:
+      db_host: "10.0.0.99"
+  register: module_output
+
+- name: Validate structural module outcomes
+  ansible.builtin.assert:
+    that:
+      - module_output.changed == true
+      - module_output.replaced_total == 1

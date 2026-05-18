@@ -23,6 +23,11 @@ which requirements are needed.
 ## Included content
 
 <!--start collection content-->
+### Modules
+Name | Description
+--- | ---
+[cd_cluster.pipeline_common.replace_placeholders](http://example.com/repository/blob/main/docs/cd_cluster.pipeline_common.replace_placeholders_module.rst)|Replace custom tokens or text placeholders inside a file
+
 <!--end collection content-->
 
 ## Using this collection

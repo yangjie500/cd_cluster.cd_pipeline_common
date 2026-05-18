@@ -1,0 +1,5 @@
+[flake8]
+max-line-length = 100
+per-file-ignores =
+    # Ignore "import not at top of file" error for all Ansible modules
+    plugins/modules/*.py: E402
