@@ -1,9 +1,19 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
-# flake8: noqa: E402,F404
 
 # Copyright: (c) 2026, Yang Jie
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
+
+from __future__ import absolute_import, division, print_function
+
+import io
+import os
+import re
+
+from ansible.module_utils.basic import AnsibleModule
+
+
+__metaclass__ = type
 
 DOCUMENTATION = r"""
 ---
@@ -87,17 +97,6 @@ backup_file:
   type: str
   returned: when backup=true and changes were made
 """
-
-from __future__ import absolute_import, division, print_function
-
-import io
-import os
-import re
-
-from ansible.module_utils.basic import AnsibleModule
-
-
-__metaclass__ = type
 
 
 def build_pattern(key: str, whole_word: bool, jinja_tokens: bool, flags: int) -> re.Pattern:
