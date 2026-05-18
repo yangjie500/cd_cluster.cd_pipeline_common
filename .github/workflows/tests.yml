@@ -23,8 +23,6 @@ jobs:
     uses: ansible/ansible-content-actions/.github/workflows/ansible_lint.yaml@main
   sanity:
     uses: ansible/ansible-content-actions/.github/workflows/sanity.yaml@main
-  unit-galaxy:
-    uses: ansible/ansible-content-actions/.github/workflows/unit.yaml@main
   unit-source:
     uses: ansible-network/github_actions/.github/workflows/unit_source.yml@main
     with:
@@ -48,7 +46,6 @@ jobs:
       - changelog
       - build-import
       - sanity
-      - unit-galaxy
       - unit-source
       - ansible-lint
     runs-on: ubuntu-latest
@@ -58,7 +55,6 @@ jobs:
           set([
           '${{ needs.changelog.result }}',
           '${{ needs.sanity.result }}',
-          '${{ needs.unit-galaxy.result }}'
           '${{ needs.ansible-lint.result }}'
           '${{ needs.unit-source.result }}'
           ])"
