@@ -6,6 +6,7 @@
 
 from __future__ import absolute_import, division, print_function
 
+
 DOCUMENTATION = r"""
 ---
 module: replace_placeholders
@@ -94,6 +95,7 @@ import os
 import re
 
 from ansible.module_utils.basic import AnsibleModule
+
 
 __metaclass__ = type
 
