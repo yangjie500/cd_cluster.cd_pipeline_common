@@ -1,0 +1,5 @@
+minor_changes:
+  - >
+    Added `replace_placeholders` Ansible module for
+    replacing placeholders in files using `<VAR>` or
+    `{{ VAR }}` token formats.
