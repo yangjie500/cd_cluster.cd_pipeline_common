@@ -43,6 +43,7 @@ jobs:
       - name: Install Python dependencies
         run: |
           python3 -m pip install --upgrade pip
+          python3 -m pip install ansible-core==2.20.4
           pip3 install ansible-dev-tools
           pip3 install molecule-plugins[docker]
 
