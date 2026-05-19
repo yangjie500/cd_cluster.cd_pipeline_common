@@ -1,0 +1,24 @@
+---
+# argument_specs file for validate_environment_inputs
+
+argument_specs:
+  main:
+    short_description: "Validates lists of required environment variables and secrets."
+    description:
+      - "An enterprise-grade validation role that ensures mandatory environment variables and secrets are loaded and non-empty."
+      - "It aggregates all validation failures and tracks the extracted values cleanly for downstream consumption."
+    author: "Yang Jie"
+    options:
+      validate_environment_lists_check_variables:
+        type: "list"
+        elements: "str"
+        required: false
+        default: []
+        description: "The list of standard environment variable names to validate and expose in cleartext log outputs."
+
+      validate_environment_lists_check_secrets:
+        type: "list"
+        elements: "str"
+        required: false
+        default: []
+        description: "The list of secret environment variable names to validate and capture in cleartext, but mask from logging streams."

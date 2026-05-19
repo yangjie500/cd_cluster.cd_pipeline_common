@@ -1,0 +1,89 @@
+---
+- name: "Converge (Refresh Cache)"
+  hosts: instance
+  gather_facts: true
+  tasks:
+    - name: Force fresh facts
+      ansible.builtin.meta: clear_facts
+
+- name: "Converge (Success: Validate environment inputs)"
+  hosts: instance
+  gather_facts: true
+
+  environment:
+    # Mocking standard environment variables
+    TEST_APP_ENV: "production"
+    TEST_APP_PORT: "8080"
+    # Mocking secret environment variables
+    TEST_DB_PASSWORD: "super_secret_password_123"
+    TEST_API_TOKEN: "jwt_token_xyz_abc"
+
+  tasks:
+    - name: Re-gather facts to populate env
+      ansible.builtin.setup:
+        gather_subset:
+          - env
+
+    - name: "Include the environment list validation role"
+      ansible.builtin.include_role:
+        name: validate_environment_inputs
+      vars:
+        validate_environment_inputs_check_variables:
+          - "TEST_APP_ENV"
+          - "TEST_APP_PORT"
+        validate_environment_inputs_check_secrets:
+          - "TEST_DB_PASSWORD"
+          - "TEST_API_TOKEN"
+
+    - name: "Assert standard environment variables are captured correctly"
+      ansible.builtin.assert:
+        that:
+          - validate_environment_inputs_role_output.variables.validated_variables.TEST_APP_ENV == 'production'
+          - validate_environment_inputs_role_output.variables.validated_variables.TEST_APP_PORT == '8080'
+        fail_msg: "Standard environment variables were not correctly stored in role output."
+        success_msg: "Successfully asserted all standard environment variables."
+
+    - name: "Assert secret environment variables are captured correctly in cleartext"
+      ansible.builtin.assert:
+        that:
+          - validate_environment_inputs_role_output.variables.validated_secrets.TEST_DB_PASSWORD == 'super_secret_password_123'
+          - validate_environment_inputs_role_output.variables.validated_secrets.TEST_API_TOKEN == 'jwt_token_xyz_abc'
+        fail_msg: "Secret variables were missing or did not match raw cleartext expectations."
+        success_msg: "Successfully verified raw cleartext secret storage downstream."
+
+- name: "Converge (Failure: Fail validation when environment inputs contain empty strings)"
+  hosts: instance
+  gather_facts: true
+
+  environment:
+    # Passing an empty string value to simulate an unconfigured or malformed variable
+    TEST_APP_ENV_2: ""
+    TEST_APP_PORT_2: "8080"
+    TEST_DB_PASSWORD_2: "super_secret_password_123"
+    TEST_API_TOKEN_2: "jwt_token_xyz_abc"
+
+  tasks:
+    - name: Re-gather facts to populate env
+      ansible.builtin.setup:
+        gather_subset:
+          - env
+
+    - name: Manage Validation Failure Test Path
+      block:
+        - name: "Include the environment list validation role"
+          ansible.builtin.include_role:
+            name: validate_environment_inputs
+          vars:
+            validate_environment_inputs_check_variables:
+              - "TEST_APP_ENV_2"
+              - "TEST_APP_PORT_2"
+            validate_environment_inputs_check_secrets:
+              - "TEST_DB_PASSWORD_2"
+              - "TEST_API_TOKEN_2"
+
+      rescue:
+        - name: "Assert that the role threw an error"
+          ansible.builtin.assert:
+            that:
+              - validate_environment_inputs_role_output.failure_category == "missing_required_environment_variables"
+            fail_msg: "The test did not trap the expected role failure."

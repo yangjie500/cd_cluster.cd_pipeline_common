@@ -1,0 +1,5 @@
+---
+# changelog fragment for validate_environment_inputs role
+
+minor_changes:
+  - "validate_environment_inputs - Added a new role to seamlessly validate lists of mandatory environment variables and secrets before pipeline execution."

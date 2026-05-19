@@ -1,0 +1,8 @@
+---
+# vars file for validate_environment_inputs
+
+# The list of environment variable keys to validate and expose in cleartext logs
+validate_environment_inputs_check_variables: []
+
+# The list of environment secret keys to validate, capture in cleartext, and mask from logs
+validate_environment_inputs_check_secrets: []
