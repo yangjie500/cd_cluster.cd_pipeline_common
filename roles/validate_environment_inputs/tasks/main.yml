@@ -1,0 +1,150 @@
+---
+- name: "[INFO] Role Configuration: validate_environment_inputs"
+  ansible.builtin.debug:
+    msg:
+      - "Variables to check: {{ validate_environment_inputs_check_variables | default('UNDEFINED', true) }}"
+      - "Secrets to check: {{ validate_environment_inputs_check_secrets | default('UNDEFINED', true) }}"
+
+- name: "[INFO] Sanitize input variables (set defaults for UNDEFINED lists)"
+  ansible.builtin.set_fact:
+    validate_environment_inputs_check_variables: "{{ validate_environment_inputs_check_variables | default([], true) }}"
+    validate_environment_inputs_check_secrets: "{{ validate_environment_inputs_check_secrets | default([], true) }}"
+
+- name: "[INFO] Initialize role tracking variables"
+  ansible.builtin.set_fact:
+    validate_environment_inputs_tracked_files_modified: []
+    validate_environment_inputs_tracked_files_deleted: []
+    validate_environment_inputs_tracked_files_created: []
+    validate_environment_inputs_tracked_custom_facts: {}
+    validate_environment_inputs_failure_message: ""
+    validate_environment_inputs_failure_category: ""
+
+- name: Manage Environment List Validation
+  block:
+    - name: Fail if input parameters are not valid lists
+      ansible.builtin.fail:
+        msg: "Both 'validate_environment_inputs_check_variables' and 'validate_environment_inputs_check_secrets' must be provided as lists."
+      when: >
+        (validate_environment_inputs_check_variables is not iterable) or
+        (validate_environment_inputs_check_secrets is not iterable)
+
+    - name: Verify environment variables exist and are not empty
+      ansible.builtin.fail:
+        msg: "Environment variable '{{ item }}' is missing or empty."
+      when: >
+        (ansible_env[item] | default('', true) | trim | length == 0) and
+        (lookup('ansible.builtin.env', item) | default('', true) | trim | length == 0)
+      loop: "{{ validate_environment_inputs_check_variables }}"
+      register: validate_environment_inputs_var_results
+      ignore_errors: true
+
+    - name: Verify environment secrets exist and are not empty
+      ansible.builtin.fail:
+        msg: "Environment secret variable '{{ item }}' is missing or empty."
+      when: >
+        (ansible_env[item] | default('', true) | trim | length == 0) and
+        (lookup('ansible.builtin.env', item) | default('', true) | trim |length == 0)
+      loop: "{{ validate_environment_inputs_check_secrets }}"
+      register: validate_environment_inputs_secret_results
+      ignore_errors: true
+      no_log: true
+
+    - name: Parse and aggregate missing variables and secrets
+      ansible.builtin.set_fact:
+        validate_environment_inputs_failed_items: >-
+          {{
+            (validate_environment_inputs_var_results.results | default([]) +
+             validate_environment_inputs_secret_results.results | default([]))
+
+            | selectattr('failed', 'defined')
+            | selectattr('failed', 'equalto', true)
+            | map(attribute='item')
+
+            | list
+          }}
+
+    - name: Trigger role failure block if any items failed validation
+      ansible.builtin.fail:
+        msg: "Validation failed for the following environment variables: {{ validate_environment_inputs_failed_items | join(', ') }}"
+      when: validate_environment_inputs_failed_items | length > 0
+
+    - name: Print the validated environment variables
+      ansible.builtin.debug:
+        msg: "Environment variable '{{ item }}' is validated. Value: {{ lookup('ansible.builtin.env', item) }}"
+      loop: "{{ validate_environment_inputs_check_variables }}"
+
+    - name: "[INFO] Construct tracked metadata map for variables"
+      ansible.builtin.set_fact:
+        validate_environment_inputs_extracted_vars: >-
+          {%- set out = {} -%}
+          {%- for key in validate_environment_inputs_check_variables -%}
+            {%- set val = ansible_env[key] | default(lookup('ansible.builtin.env', key)) | trim -%}
+            {%- set _ = out.update({key: val}) -%}
+          {%- endfor -%}
+          {{ out }}
+
+    - name: "[INFO] Extract cleartext secrets into tracking payload"
+      ansible.builtin.set_fact:
+        validate_environment_inputs_extracted_secrets: >-
+          {%- set out = {} -%}
+          {%- for key in validate_environment_inputs_check_secrets -%}
+            {%- set val = ansible_env[key] | default(lookup('ansible.builtin.env', key)) | trim -%}
+            {%- set _ = out.update({key: val}) -%}
+          {%- endfor -%}
+          {{ out }}
+      no_log: true
+
+    - name: "[INFO] Update custom facts with operation output"
+      ansible.builtin.set_fact:
+        validate_environment_inputs_tracked_custom_facts:
+          validation_status: "success"
+          validated_variables_count: "{{ validate_environment_inputs_check_variables | length }}"
+          validated_secrets_count: "{{ validate_environment_inputs_check_secrets | length }}"
+          validated_variables: "{{ validate_environment_inputs_extracted_vars }}"
+          validated_secrets: "{{ validate_environment_inputs_extracted_secrets }}"
+
+  rescue:
+    - name: "[ERROR] Record the exact task failure stderr"
+      ansible.builtin.set_fact:
+        validate_environment_inputs_failure_message: >-
+          {{
+            ansible_failed_result.msg | default('An unknown validation error occurred.')
+          }}
+
+    - name: "[ERROR] Identify the specific failure type"
+      ansible.builtin.set_fact:
+        validate_environment_inputs_failure_category: >-
+          {%- set msg = validate_environment_inputs_failure_message.lower() -%}
+          {%- if 'validation failed for' in msg -%}
+            missing_required_environment_variables
+          {%- else -%}
+            unclassified_error
+          {%- endif -%}
+
+    - name: "[ERROR] Fail the task"
+      ansible.builtin.fail:
+        msg: "The role failed because one or more environment variables were invalid."
+
+  always:
+    - name: "[INFO] Construct the Generic Role Output Object"
+      ansible.builtin.set_fact:
+        validate_environment_inputs_role_output:
+          role_name: "validate_environment_inputs"
+          failure_message: "{{ validate_environment_inputs_failure_message }}"
+          failure_category: "{{ validate_environment_inputs_failure_category }}"
+          files:
+            modified: "{{ validate_environment_inputs_tracked_files_modified }}"
+            deleted: "{{ validate_environment_inputs_tracked_files_deleted }}"
+            created: "{{ validate_environment_inputs_tracked_files_created }}"
+          variables: "{{ validate_environment_inputs_tracked_custom_facts }}"
+
+    - name: "[INFO] Print the generic output object (with secrets masked for safety)"
+      ansible.builtin.debug:
+        msg: >-
+          {{
+            validate_environment_inputs_role_output | combine({
+              'variables': validate_environment_inputs_role_output.variables | combine({
+                'validated_secrets': '*** MASKED IN LOGS FOR SECURITY ***'
+              })
+            }, recursive=True)
+          }}
