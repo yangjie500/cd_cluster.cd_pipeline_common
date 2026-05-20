@@ -1,0 +1,71 @@
+---
+- name: "SETUP: Initialize temporary test directories"
+  ansible.builtin.file:
+    path: "{{ ansible_user_dir }}/archive_test_env/nested_dir"
+    state: directory
+    mode: "0755"
+
+- name: "SETUP: Create sample root archive file"
+  ansible.builtin.copy:
+    content: "Root config payload"
+    dest: "{{ ansible_user_dir }}/archive_test_env/config.json"
+    mode: "0644"
+
+- name: "SETUP: Create sample nested archive file"
+  ansible.builtin.copy:
+    content: "Nested script payload"
+    dest: "{{ ansible_user_dir }}/archive_test_env/nested_dir/setup.sh"
+    mode: "0755"
+
+- name: "SETUP: Package assets into a tarball"
+  community.general.archive:
+    path: "{{ ansible_user_dir }}/archive_test_env"
+    dest: "{{ ansible_user_dir }}/test_release.tar.gz"
+    format: gz
+
+- name: "TEST CASE 1: [SUCCESS SCENARIO] Start verification"
+  ansible.builtin.block:
+    - name: "[SUCCESS SCENARIO] Verify archive contains all expected files"
+      cd_cluster.cd_pipeline_common.verify_archive_contents:
+        archive_path: "{{ ansible_user_dir }}/test_release.tar.gz"
+        required_files:
+          - config.json
+          - setup.sh
+      register: test_success
+
+    - name: "[SUCCESS SCENARIO] Assert expected outcomes pass successfully"
+      ansible.builtin.assert:
+        that:
+          - test_success.changed == false
+          - test_success.matched == true
+          - "test_success.found_files | length == 2"
+        fail_msg: "FAIL: Success scenario assertions did not meet structural expectations."
+        success_msg: "PASS: Success scenario verified completely."
+
+- name: "TEST CASE 2: [FAILURE SCENARIO] Start verification"
+  ansible.builtin.block:
+    - name: "[FAILURE SCENARIO] Verify archive handling when target assets are missing"
+      cd_cluster.cd_pipeline_common.verify_archive_contents:
+        archive_path: "{{ ansible_user_dir }}/test_release.tar.gz"
+        required_files:
+          - config.json
+          - missing_critical_file.txt
+      register: test_failure
+
+    - name: "[FAILURE SCENARIO] Assert module accurately flags missing metrics"
+      ansible.builtin.assert:
+        that:
+          - test_failure.changed == false
+          - test_failure.matched == false
+          - "'config.json' in test_failure.found_files"
+          - "'missing_critical_file.txt' not in test_failure.found_files"
+        fail_msg: "FAIL: Failure scenario handling did not meet structural expectations."
+        success_msg: "PASS: Failure scenario handled and recorded accurately."
+
+- name: "TEARDOWN: Wipe temporary test components from the host"
+  ansible.builtin.file:
+    path: "{{ item }}"
+    state: absent
+  loop:
+    - "{{ ansible_user_dir }}/archive_test_env"
+    - "{{ ansible_user_dir }}/test_release.tar.gz"
