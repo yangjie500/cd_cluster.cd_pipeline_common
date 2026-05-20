@@ -1,0 +1,67 @@
+---
+- name: "Converge (Success: Verify valid artifact signature using Cosign)"
+  hosts: instance
+  gather_facts: false
+
+  vars:
+    converge_test_dir: "/tmp/cosign_test_box"
+    converge_blob_path: "/tmp/cosign_test_box/sample_artifact.tar.gz"
+    converge_pub_path: "/tmp/cosign_test_box/cosign.pub"
+    converge_sig_path: "/tmp/cosign_test_box/sample_artifact.tar.gz.sig"
+
+  tasks:
+    - name: "Include the signature verification role"
+      ansible.builtin.include_role:
+        name: verify_signature_cosign
+      vars:
+        verify_signature_cosign_blob_file_path: "{{ converge_blob_path }}"
+        verify_signature_cosign_sig_file_path: "{{ converge_sig_path }}"
+        verify_signature_cosign_pub_key_file_path: "{{ converge_pub_path }}"
+
+    - name: "Assert signature validation reported success"
+      ansible.builtin.assert:
+        that:
+          - verify_signature_cosign_role_output.variables.verification_status == "verified"
+        fail_msg: "Cosign failed to verify a known valid signature."
+        success_msg: "Successfully validated valid artifact payload integrity."
+
+- name: "Converge (Failure: Fail validation when artifact payload has been tampered with)"
+  hosts: instance
+  gather_facts: false
+
+  vars:
+    converge_test_dir: "/tmp/cosign_test_box"
+    converge_blob_path: "/tmp/cosign_test_box/sample_artifact.tar.gz"
+    converge_pub_path: "/tmp/cosign_test_box/cosign.pub"
+    converge_sig_path: "/tmp/cosign_test_box/sample_artifact.tar.gz.sig"
+
+  tasks:
+    - name: "Force flush cached facts from previous play execution"
+      ansible.builtin.meta: clear_facts
+
+    - name: "Intentionally tamper with the blob payload file to invalidate the signature"
+      ansible.builtin.copy:
+        content: "Altered/Tampered payload content strings."
+        dest: "{{ converge_blob_path }}"
+        mode: "0644"
+
+    - name: Manage Signature Verification Failure Test Path
+      block:
+        - name: "Include the signature verification role with tampered data"
+          ansible.builtin.include_role:
+            name: verify_signature_cosign
+          vars:
+            verify_signature_cosign_blob_file_path: "{{ converge_blob_path }}"
+            verify_signature_cosign_sig_file_path: "{{ converge_sig_path }}"
+            verify_signature_cosign_pub_key_file_path: "{{ converge_pub_path }}"
+
+        - name: "Fail test if the role unexpectedly succeeded"
+          ansible.builtin.fail:
+            msg: "The role succeeded despite the artifact blob payload being heavily altered."
+
+      rescue:
+        - name: "Assert that the role threw an error"
+          ansible.builtin.assert:
+            that:
+              - verify_signature_cosign_role_output.failure_category == "signature_mismatch"
+            fail_msg: "The test did not trap the expected role failure."

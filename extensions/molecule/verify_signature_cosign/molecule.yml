@@ -1,0 +1,35 @@
+---
+driver:
+  name: docker
+
+ansible:
+  executor:
+    backend: ansible-playbook
+
+provisioner:
+  name: ansible
+  config_options:
+    defaults:
+      # Uses the absolute path of your project to safely find the roles folder
+      roles_path: ${MOLECULE_PROJECT_DIRECTORY}/roles
+      gathering: smart
+      fact_caching: jsonfile
+      fact_caching_connection: /tmp/molecule_facts_cache
+      fact_caching_timeout: 7200
+  inventory:
+    group_vars:
+      all:
+
+platforms:
+  - name: instance
+    image: docker.io/alpine:3.23.3
+    privileged: false
+
+scenario:
+  name: verify_signature_cosign
+  test_sequence:
+    - create
+    - prepare
+    - converge
+    - verify
+    - destroy
