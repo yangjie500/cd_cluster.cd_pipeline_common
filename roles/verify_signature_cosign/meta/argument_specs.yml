@@ -1,0 +1,25 @@
+---
+# argument_specs file for verify_signature_cosign
+
+argument_specs:
+  main:
+    short_description: "Verifies a local artifact signature using Cosign and a public key file."
+    description:
+      - "A verification role that performs signature attestation on binary blobs."
+      - "It utilizes the 'cosign verify-blob' utility with a local public key file"
+    author: "Yang Jie"
+    options:
+      verify_signature_cosign_blob_file_path:
+        type: "str"
+        required: true
+        description: "The absolute or relative local filesystem path to the target artifact blob being verified."
+
+      verify_signature_cosign_sig_file_path:
+        type: "str"
+        required: true
+        description: "The absolute or relative local filesystem path to the signature file generated for the corresponding blob."
+
+      verify_signature_cosign_pub_key_file_path:
+        type: "str"
+        required: true
+        description: "The absolute or relative local filesystem path to the public key file (e.g., cosign.pub) used for signature matching."

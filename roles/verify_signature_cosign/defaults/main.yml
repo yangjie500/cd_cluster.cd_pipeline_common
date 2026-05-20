@@ -1,0 +1,11 @@
+---
+# defaults file for verify_signature_cosign
+
+# The local file path to the artifact blob that needs verification
+verify_signature_cosign_blob_file_path: ""
+
+# The local file path to the signature file generated for the blob
+verify_signature_cosign_sig_file_path: ""
+
+# The local file path to the public key file used for verification (e.g., cosign.pub)
+verify_signature_cosign_pub_key_file_path: ""

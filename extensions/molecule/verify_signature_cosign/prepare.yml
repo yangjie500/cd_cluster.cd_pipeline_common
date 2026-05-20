@@ -1,0 +1,70 @@
+---
+- name: Prepare
+  hosts: instance
+  gather_facts: false
+
+  vars:
+    prepare_test_dir: "/tmp/cosign_test_box"
+    prepare_blob_path: "/tmp/cosign_test_box/sample_artifact.tar.gz"
+    prepare_key_path: "/tmp/cosign_test_box/cosign.key"
+    prepare_pub_path: "/tmp/cosign_test_box/cosign.pub"
+    prepare_sig_path: "/tmp/cosign_test_box/sample_artifact.tar.gz.sig"
+
+  tasks:
+    - name: Ensure isolation staging directory exists
+      ansible.builtin.file:
+        path: "{{ prepare_test_dir }}"
+        state: directory
+        mode: "0755"
+
+    - name: Install tools on Alpine
+      ansible.builtin.command: apk add --no-cache tar gzip
+      changed_when: true
+
+    - name: Install Cosign binary
+      vars:
+        cosign_version: "2.2.4"
+      ansible.builtin.get_url:
+        url: "https://github.com/sigstore/cosign/releases/download/v{{ cosign_version }}/cosign-linux-amd64"
+        dest: "/usr/local/bin/cosign"
+        mode: "0755"
+        owner: root
+        group: root
+      become: true
+
+    - name: Check if Cosign binary is present on the instance
+      ansible.builtin.command:
+        cmd: which cosign
+      register: prepare_cosign_check
+      changed_when: false
+
+    - name: Generate passwordless Cosign private and public keys
+      ansible.builtin.command:
+        cmd: "cosign generate-key-pair --output-key-prefix={{ prepare_test_dir }}/cosign"
+      environment:
+        COSIGN_PASSWORD: ""
+      changed_when: true
+
+    - name: Create a sample text file for archiving
+      ansible.builtin.copy:
+        content: "Enterprise artifact verification baseline data pipeline."
+        dest: "{{ prepare_test_dir }}/sample.txt"
+        mode: "0644"
+
+    - name: Compile sample text file into a target .tar.gz archive using built-in tar command
+      # noqa command-instead-of-module
+      ansible.builtin.command:
+        cmd: "tar -czf {{ prepare_blob_path }} -C {{ prepare_test_dir }} sample.txt"
+      changed_when: true
+
+    - name: Sign the generated .tar.gz archive using Cosign
+      ansible.builtin.command:
+        cmd: >-
+          cosign sign-blob
+          --yes
+          --key "{{ prepare_key_path }}"
+          --output-signature "{{ prepare_sig_path }}"
+          "{{ prepare_blob_path }}"
+      environment:
+        COSIGN_PASSWORD: ""
+      changed_when: true
