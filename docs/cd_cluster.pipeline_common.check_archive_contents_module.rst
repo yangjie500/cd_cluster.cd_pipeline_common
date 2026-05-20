@@ -1,9 +1,9 @@
-.. _cd_cluster.pipeline_common.verify_archive_contents_module:
+.. _cd_cluster.pipeline_common.check_archive_contents_module:
 
 
-**************************************************
-cd_cluster.pipeline_common.verify_archive_contents
-**************************************************
+*************************************************
+cd_cluster.pipeline_common.check_archive_contents
+*************************************************
 
 **Verify if a tar archive contains a specific list of required files**
 
@@ -192,4 +192,4 @@ Status
 Authors
 ~~~~~~~
 
-- Custom Ops Team
+- Yang Jie (@yangjie500)

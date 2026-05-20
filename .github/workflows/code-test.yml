@@ -81,6 +81,13 @@ jobs:
           fetch-depth: 0
           path: source
 
+      - name: Install dependent collections from requirements
+        run: |
+          ansible-galaxy collection install \
+            -r source/test-requirements.yml \
+            -p ${{ env.COLLECTIONS_PATH }}/ansible_collections/ \
+            --force
+
       - name: Read collection metadata
         id: galaxy
         run: |

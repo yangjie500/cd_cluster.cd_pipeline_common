@@ -22,11 +22,12 @@
     path: "{{ ansible_user_dir }}/archive_test_env"
     dest: "{{ ansible_user_dir }}/test_release.tar.gz"
     format: gz
+    mode: "0644"
 
 - name: "TEST CASE 1: [SUCCESS SCENARIO] Start verification"
-  ansible.builtin.block:
+  block:
     - name: "[SUCCESS SCENARIO] Verify archive contains all expected files"
-      cd_cluster.cd_pipeline_common.verify_archive_contents:
+      cd_cluster.pipeline_common.check_archive_contents:
         archive_path: "{{ ansible_user_dir }}/test_release.tar.gz"
         required_files:
           - config.json
@@ -43,9 +44,9 @@
         success_msg: "PASS: Success scenario verified completely."
 
 - name: "TEST CASE 2: [FAILURE SCENARIO] Start verification"
-  ansible.builtin.block:
+  block:
     - name: "[FAILURE SCENARIO] Verify archive handling when target assets are missing"
-      cd_cluster.cd_pipeline_common.verify_archive_contents:
+      cd_cluster.pipeline_common.check_archive_contents:
         archive_path: "{{ ansible_user_dir }}/test_release.tar.gz"
         required_files:
           - config.json

@@ -46,12 +46,12 @@ Recommended usage:
 ### Modules
 Name | Description
 --- | ---
+[cd_cluster.pipeline_common.check_archive_contents](http://example.com/repository/blob/main/docs/cd_cluster.pipeline_common.check_archive_contents_module.rst)|Verify if a tar archive contains a specific list of required files
 [cd_cluster.pipeline_common.oauth_token](http://example.com/repository/blob/main/docs/cd_cluster.pipeline_common.oauth_token_module.rst)|Get OAuth/JWT access token using server-side flows
 [cd_cluster.pipeline_common.parse_structured_filename](http://example.com/repository/blob/main/docs/cd_cluster.pipeline_common.parse_structured_filename_module.rst)|Extract structured key-value metadata from a delimited filename.
 [cd_cluster.pipeline_common.register_emitter](http://example.com/repository/blob/main/docs/cd_cluster.pipeline_common.register_emitter_module.rst)|Register signal emitter configuration
 [cd_cluster.pipeline_common.replace_placeholders](http://example.com/repository/blob/main/docs/cd_cluster.pipeline_common.replace_placeholders_module.rst)|Replace custom tokens or text placeholders inside a file
 [cd_cluster.pipeline_common.signal_emit](http://example.com/repository/blob/main/docs/cd_cluster.pipeline_common.signal_emit_module.rst)|Emit a signal using a registered emitter
-[cd_cluster.pipeline_common.verify_archive_contents](http://example.com/repository/blob/main/docs/cd_cluster.pipeline_common.verify_archive_contents_module.rst)|Verify if a tar archive contains a specific list of required files
 
 <!--end collection content-->
 

@@ -11,7 +11,7 @@ __metaclass__ = type
 
 DOCUMENTATION = r"""
 ---
-module: verify_archive_contents
+module: check_archive_contents
 short_description: Verify if a tar archive contains a specific list of required files
 description:
   - Inspects a .tar, .tar.gz, or .tar.bz2 archive to confirm
@@ -28,7 +28,7 @@ options:
     type: list
     elements: str
 author:
-  - Custom Ops Team
+  - Yang Jie (@yangjie500)
 """
 
 EXAMPLES = r"""
