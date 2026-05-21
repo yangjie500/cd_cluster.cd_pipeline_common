@@ -1,0 +1,116 @@
+---
+- name: "TEST CASE 1: [SUCCESS SCENARIO] Parse dynamic keys from an absolute path string"
+  block:
+    - name: "[SUCCESS SCENARIO] Process structured absolute path"
+      cd_cluster.pipeline_common.parse_structured_filename:
+        filename: "/var/tmp/builds/hello+--12345+--v1.1.1+--20052026T121212.tar.gz"
+        delimiter: "+--"
+        keys:
+          - name
+          - tag
+          - version
+          - datetime
+      register: test_success_abs
+
+    - name: "[SUCCESS SCENARIO] Assert absolute path data maps perfectly"
+      ansible.builtin.assert:
+        that:
+          - test_success_abs.failed == false
+          - test_success_abs.parsed_data.name == 'hello'
+          - test_success_abs.parsed_data.tag == '12345'
+          - test_success_abs.parsed_data.version == 'v1.1.1'
+          - test_success_abs.parsed_data.datetime == '20052026T121212'
+        fail_msg: "FAIL: Absolute path parsing did not meet structural expectations."
+        success_msg: "PASS: Absolute path verified completely."
+
+- name: "TEST CASE 2: [SUCCESS SCENARIO] Parse dynamic keys from a relative path string"
+  block:
+    - name: "[SUCCESS SCENARIO] Process structured relative path"
+      cd_cluster.pipeline_common.parse_structured_filename:
+        filename: "../../downloads/artifacts/hello+--12345+--v1.1.1+--20052026T121212.tar.gz"
+        delimiter: "+--"
+        keys:
+          - name
+          - tag
+          - version
+          - datetime
+      register: test_success_rel
+
+    - name: "[SUCCESS SCENARIO] Assert relative path maps perfectly"
+      ansible.builtin.assert:
+        that:
+          - test_success_rel.failed == false
+          - test_success_rel.parsed_data.name == 'hello'
+          - test_success_rel.parsed_data.tag == '12345'
+          - test_success_rel.parsed_data.version == 'v1.1.1'
+          - test_success_rel.parsed_data.datetime == '20052026T121212'
+        fail_msg: "FAIL: Relative path parsing did not meet structural expectations."
+        success_msg: "PASS: Relative path verified completely."
+
+- name: "TEST CASE 3: [FAILURE SCENARIO] Catch key length mismatches"
+  block:
+    - name: "[FAILURE SCENARIO] Attempt to process string with missing metadata keys"
+      cd_cluster.pipeline_common.parse_structured_filename:
+        filename: "hello+--12345+--v1.1.1+--20052026T121212.zip"
+        delimiter: "+--"
+        keys:
+          - name
+          - tag
+      register: test_failure_keys
+      ignore_errors: true
+
+    - name: "[FAILURE SCENARIO] Assert module strictly catches key mismatches"
+      ansible.builtin.assert:
+        that:
+          - test_failure_keys.failed == true
+          - "'Parsing mismatch' in test_failure_keys.msg"
+          - "test_failure_keys.extracted_fields | length == 4"
+        fail_msg: "FAIL: Missing keys handling did not fail as structurally expected."
+        success_msg: "PASS: Missing keys failure scenario caught accurately."
+
+- name: "TEST CASE 5: [FAILURE SCENARIO] Catch missing values between delimiters"
+  block:
+    - name: "[FAILURE SCENARIO] Attempt to process filename with a missing field value"
+      parse_structured_filename:
+        filename: "hello+--+--v1.1.1+--20052026T121212.tar.gz"
+        delimiter: "+--"
+        keys:
+          - name
+          - tag
+          - version
+          - datetime
+      register: test_failure_missing_value
+      ignore_errors: true
+
+    - name: "[FAILURE SCENARIO] Assert module catches the dropped element block"
+      ansible.builtin.assert:
+        that:
+          - test_failure_missing_value.failed == true
+          - "'Parsing mismatch' in test_failure_missing_value.msg"
+          - "test_failure_missing_value.extracted_fields | length == 3"
+          - "test_failure_missing_value.parsed_data.tag == ''"
+        fail_msg: "FAIL: Missing field value was not handled or rejected accurately."
+        success_msg: "PASS: Missing field value failure scenario verified completely."
+
+- name: "TEST CASE 6: [FAILURE SCENARIO] Missing Input"
+  block:
+    - name: "[FAILURE SCENARIO] Attempt to process filename with a missing input"
+      parse_structured_filename:
+        filename: ""
+        delimiter: "+--"
+        keys:
+          - name
+          - tag
+          - version
+          - datetime
+      register: test_failure_missing_value
+      ignore_errors: true
+
+    - name: "[FAILURE SCENARIO] Assert module catches the dropped element block"
+      ansible.builtin.assert:
+        that:
+          - test_failure_missing_value.failed == true
+          - "'cannot be empty' in test_failure_missing_value.msg"
+
+        fail_msg: "FAIL: Missing field value was not handled or rejected accurately."
+        success_msg: "PASS: Missing field value failure scenario verified completely."

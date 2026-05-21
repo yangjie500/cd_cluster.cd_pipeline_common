@@ -16,6 +16,7 @@ dnf install python3.12
 python3.12 -m venv custom-venv
 source custom-venv/bin/activate
 python -m pip install --upgrade pip
+pip3 install docsible
 pip3 install ansible-dev-tools
 pip3 install molecule-plugins[docker]
 pip install pre-commit

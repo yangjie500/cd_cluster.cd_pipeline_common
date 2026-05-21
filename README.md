@@ -26,6 +26,7 @@ which requirements are needed.
 ### Modules
 Name | Description
 --- | ---
+[cd_cluster.pipeline_common.parse_structured_filename](http://example.com/repository/blob/main/docs/cd_cluster.pipeline_common.parse_structured_filename_module.rst)|Extracts structured key-value pairs from a delimited filename string.
 [cd_cluster.pipeline_common.replace_placeholders](http://example.com/repository/blob/main/docs/cd_cluster.pipeline_common.replace_placeholders_module.rst)|Replace custom tokens or text placeholders inside a file
 
 <!--end collection content-->
