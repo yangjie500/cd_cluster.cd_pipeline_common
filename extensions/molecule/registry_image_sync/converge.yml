@@ -1,0 +1,177 @@
+---
+- name: "Converge (Success: Sync image and signature between remote registries using Skopeo)"
+  hosts: instance
+  gather_facts: true
+  tasks:
+    - name: "Test remote image sync architecture using Skopeo"
+      ansible.builtin.include_role:
+        name: "registry_image_sync"
+      vars:
+        # Source Registry Variable Mapping
+        registry_image_sync_src_registry_url: "{{ registry_image_sync_var_registry_url }}"
+        registry_image_sync_src_username: "test-src-user"
+        registry_image_sync_src_password: "{{ registry_image_sync_secret_registry_token }}"
+        registry_image_sync_src_image_name: "{{ registry_image_sync_var_src_image_name }}"
+        registry_image_sync_src_image_tag: "{{ registry_image_sync_var_src_image_tag }}"
+        registry_image_sync_src_tls_verify: true
+
+        # Destination Registry Variable Mapping
+        registry_image_sync_dest_registry_url: "{{ registry_image_sync_var_registry_url }}"
+        registry_image_sync_dest_username: "test-dest-user"
+        registry_image_sync_dest_password: "{{ registry_image_sync_secret_registry_token }}"
+        registry_image_sync_dest_image_name: "{{ registry_image_sync_var_dest_image_name }}"
+        registry_image_sync_dest_image_tag: "{{ registry_image_sync_var_dest_image_tag }}"
+        registry_image_sync_dest_tls_verify: true
+
+- name: "Verify (Success: Sync image and signature between remote registries using Skopeo)"
+  hosts: all
+  gather_facts: false
+  tasks:
+    - name: Verify image existence via skopeo inspect
+      # yamllint disable rule:line-length
+      ansible.builtin.command:
+        cmd: >-
+          skopeo inspect
+          docker://{{ registry_image_sync_var_registry_url }}/{{ registry_image_sync_var_dest_image_name }}:{{ registry_image_sync_var_dest_image_tag }}
+      register: push_image_to_registry_generic_inspect_result
+      changed_when: false
+
+    - name: Verify signature existence via skopeo inspect
+      # yamllint disable rule:line-length
+      ansible.builtin.command:
+        cmd: >-
+          skopeo inspect
+          docker://{{ registry_image_sync_var_registry_url }}/{{ registry_image_sync_var_dest_image_name }}:{{ registry_image_sync_var_signature_tag }}
+      register: push_image_to_registry_generic_inspect_result
+      changed_when: false
+
+    - name: "[Cleanup] Delete the pushed image from the registry"
+      # yamllint disable rule:line-length
+      ansible.builtin.uri:
+        url: "https://gitlab.com/api/v4/projects/{{ registry_image_sync_var_gitlab_project_id }}/registry/repositories/{{ registry_image_sync_var_gitlab_repo_id }}/tags/{{ registry_image_sync_var_dest_image_tag }}"
+        method: DELETE
+        headers:
+          PRIVATE-TOKEN: "{{ registry_image_sync_secret_registry_token }}"
+        status_code: [200]
+        validate_certs: true
+
+    - name: "[Cleanup] Delete the pushed signature from the registry"
+      # yamllint disable rule:line-length
+      ansible.builtin.uri:
+        url: "https://gitlab.com/api/v4/projects/{{ registry_image_sync_var_gitlab_project_id }}/registry/repositories/{{ registry_image_sync_var_gitlab_repo_id }}/tags/{{ registry_image_sync_var_signature_tag }}"
+        method: DELETE
+        headers:
+          PRIVATE-TOKEN: "{{ registry_image_sync_secret_registry_token }}"
+        status_code: [200]
+        validate_certs: true
+
+- name: "Converge (Success: Sync image without signature between remote registries using Skopeo)"
+  hosts: instance
+  gather_facts: true
+  tasks:
+    - name: "Test remote image sync architecture using Skopeo"
+      ansible.builtin.include_role:
+        name: "registry_image_sync"
+      vars:
+        # Source Registry Variable Mapping
+        registry_image_sync_src_registry_url: "{{ registry_image_sync_var_registry_url }}"
+        registry_image_sync_src_username: "test-src-user"
+        registry_image_sync_src_password: "{{ registry_image_sync_secret_registry_token }}"
+        registry_image_sync_src_image_name: "{{ registry_image_sync_var_src_image_name }}"
+        registry_image_sync_src_image_tag: "{{ registry_image_sync_var_src_image_tag_wo_signature }}"
+        registry_image_sync_src_tls_verify: true
+
+        # Destination Registry Variable Mapping
+        registry_image_sync_dest_registry_url: "{{ registry_image_sync_var_registry_url }}"
+        registry_image_sync_dest_username: "test-dest-user"
+        registry_image_sync_dest_password: "{{ registry_image_sync_secret_registry_token }}"
+        registry_image_sync_dest_image_name: "{{ registry_image_sync_var_dest_image_name }}"
+        registry_image_sync_dest_image_tag: "{{ registry_image_sync_var_dest_image_tag_wo_signature }}"
+        registry_image_sync_dest_tls_verify: true
+
+- name: "Verify (Success: Sync image and signature between remote registries using Skopeo)"
+  hosts: all
+  gather_facts: false
+  tasks:
+    - name: Verify image existence via skopeo inspect
+      # yamllint disable rule:line-length
+      ansible.builtin.command:
+        cmd: >-
+          skopeo inspect
+          docker://{{ registry_image_sync_var_registry_url }}/{{ registry_image_sync_var_dest_image_name }}:{{ registry_image_sync_var_dest_image_tag_wo_signature }}
+      register: push_image_to_registry_generic_inspect_result
+      changed_when: false
+
+    - name: "[Cleanup] Delete the pushed image from the registry"
+      # yamllint disable rule:line-length
+      ansible.builtin.uri:
+        url: "https://gitlab.com/api/v4/projects/{{ registry_image_sync_var_gitlab_project_id }}/registry/repositories/{{ registry_image_sync_var_gitlab_repo_id }}/tags/{{ registry_image_sync_var_dest_image_tag_wo_signature }}"
+        method: DELETE
+        headers:
+          PRIVATE-TOKEN: "{{ registry_image_sync_secret_registry_token }}"
+        status_code: [200]
+        validate_certs: true
+
+- name: "Converge (Failure: Sync image and signature between remote registries using Skopeo with wrong password)"
+  hosts: instance
+  gather_facts: true
+  tasks:
+    - name: This block will fail with bad_credentials
+      block:
+        - name: "Test remote image sync architecture using Skopeo"
+          ansible.builtin.include_role:
+            name: "registry_image_sync"
+          vars:
+            # Source Registry Variable Mapping
+            registry_image_sync_src_registry_url: "{{ registry_image_sync_var_registry_url }}"
+            registry_image_sync_src_username: "test-src-user"
+            registry_image_sync_src_password: "THISISAWRONGPASSWORD"
+            registry_image_sync_src_image_name: "{{ registry_image_sync_var_src_image_name }}"
+            registry_image_sync_src_image_tag: "{{ registry_image_sync_var_src_image_tag }}"
+            registry_image_sync_src_tls_verify: true
+
+            # Destination Registry Variable Mapping
+            registry_image_sync_dest_registry_url: "{{ registry_image_sync_var_registry_url }}"
+            registry_image_sync_dest_username: "test-dest-user"
+            registry_image_sync_dest_password: "{{ registry_image_sync_secret_registry_token }}"
+            registry_image_sync_dest_image_name: "{{ registry_image_sync_var_dest_image_name }}"
+            registry_image_sync_dest_image_tag: "{{ registry_image_sync_var_dest_image_tag }}"
+            registry_image_sync_dest_tls_verify: true
+      rescue:
+        - name: Assert that the role threw an error
+          ansible.builtin.assert:
+            that:
+              - registry_image_sync_role_output.failure_category == "bad_credentials"
+            fail_msg: "The test did not trap the expected role failure."
+
+- name: "Converge (Failure: Sync image and signature between remote registries using Skopeo with no source image)"
+  hosts: instance
+  gather_facts: true
+  tasks:
+    - name: This block will fail with source_image_not_found
+      block:
+        - name: "Test remote image sync architecture using Skopeo"
+          ansible.builtin.include_role:
+            name: "registry_image_sync"
+          vars:
+            # Source Registry Variable Mapping
+            registry_image_sync_src_registry_url: "{{ registry_image_sync_var_registry_url }}"
+            registry_image_sync_src_username: "test-src-user"
+            registry_image_sync_src_password: "{{ registry_image_sync_secret_registry_token }}"
+            registry_image_sync_src_image_name: "{{ registry_image_sync_var_src_image_name }}"
+            registry_image_sync_src_image_tag: "100.0.0"
+            registry_image_sync_src_tls_verify: true
+
+            # Destination Registry Variable Mapping
+            registry_image_sync_dest_registry_url: "{{ registry_image_sync_var_registry_url }}"
+            registry_image_sync_dest_username: "test-dest-user"
+            registry_image_sync_dest_password: "{{ registry_image_sync_secret_registry_token }}"
+            registry_image_sync_dest_image_name: "{{ registry_image_sync_var_dest_image_name }}"
+            registry_image_sync_dest_image_tag: "{{ registry_image_sync_var_dest_image_tag }}"
+            registry_image_sync_dest_tls_verify: true
+      rescue:
+        - name: Assert that the role threw an error
+          ansible.builtin.assert:
+            that:
+              - registry_image_sync_role_output.failure_category == "source_image_not_found"
+            fail_msg: "The test did not trap the expected role failure."

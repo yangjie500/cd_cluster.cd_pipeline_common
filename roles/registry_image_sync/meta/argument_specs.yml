@@ -1,0 +1,68 @@
+---
+argument_specs:
+  main:
+    short_description: "Sync container images and signatures between registries using Skopeo."
+    description:
+      - "Logs into source and destination registries."
+      - "Generates clean image configurations from components."
+      - "Pushes targeted image blobs along with matching structural .sig signature assets."
+    options:
+      registry_image_sync_src_registry_url:
+        type: "str"
+        required: true
+        description: "Base hostname URL for the origin remote engine repository registry."
+
+      registry_image_sync_src_username:
+        type: "str"
+        required: true
+        description: "Username credential targeting read access on the origin registry infrastructure."
+
+      registry_image_sync_src_password:
+        type: "str"
+        required: true
+        description: "Password secret credential pairing with origin username authentication blocks."
+
+      registry_image_sync_src_image_name:
+        type: "str"
+        required: true
+        description: "Target source image path scope name cataloged inside origin namespace boundaries."
+
+      registry_image_sync_src_image_tag:
+        type: "str"
+        required: true
+        description: "Explicit semantic versioning tag pinning down source tracking criteria targets."
+
+      registry_image_sync_src_tls_verify:
+        type: "bool"
+        default: true
+        description: "Enforces strict TLS security socket certificate validation layer matches on origin queries."
+
+      registry_image_sync_dest_registry_url:
+        type: "str"
+        required: true
+        description: "Base hostname URL identifying target end destination repository systems."
+
+      registry_image_sync_dest_username:
+        type: "str"
+        required: true
+        description: "Username operational identity claiming write authorization inside destination space blocks."
+
+      registry_image_sync_dest_password:
+        type: "str"
+        required: true
+        description: "Secure password or access token string mapped to target target writing identity profiles."
+
+      registry_image_sync_dest_image_name:
+        type: "str"
+        required: true
+        description: "Target path assignment mapped inside the target target registry systems namespace."
+
+      registry_image_sync_dest_image_tag:
+        type: "str"
+        required: true
+        description: "Target version tagging naming marker expected on finalized storage structures."
+
+      registry_image_sync_dest_tls_verify:
+        type: "bool"
+        default: true
+        description: "Enforces TLS verification constraints during outbound storage writes on destination endpoints."

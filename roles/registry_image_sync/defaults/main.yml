@@ -1,0 +1,18 @@
+---
+# defaults file for registry_image_sync
+
+# --- Source Registry Settings ---
+registry_image_sync_src_registry_url: ""
+registry_image_sync_src_username: ""
+registry_image_sync_src_password: ""
+registry_image_sync_src_image_name: ""
+registry_image_sync_src_image_tag: ""
+registry_image_sync_src_tls_verify: true
+
+# --- Destination Registry Settings ---
+registry_image_sync_dest_registry_url: ""
+registry_image_sync_dest_username: ""
+registry_image_sync_dest_password: ""
+registry_image_sync_dest_image_name: ""
+registry_image_sync_dest_image_tag: ""
+registry_image_sync_dest_tls_verify: true

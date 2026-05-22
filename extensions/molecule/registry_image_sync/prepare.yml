@@ -1,0 +1,8 @@
+---
+- name: Prepare
+  hosts: instance
+  gather_facts: false
+  tasks:
+    - name: Install tools on Alpine
+      ansible.builtin.command: apk add --no-cache skopeo
+      changed_when: true
