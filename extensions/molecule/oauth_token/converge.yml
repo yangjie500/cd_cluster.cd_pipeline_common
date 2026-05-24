@@ -1,0 +1,102 @@
+---
+- name: "Converge & Verify (Success: OAuth Token via Client Credentials)"
+  hosts: instance
+  gather_facts: true
+
+  tasks:
+    - name: Request OAuth access token
+      cd_cluster.pipeline_common.oauth_token:
+        token_url: "{{ oauth_token_secret_keycloak_token_url }}"
+        flow: client_credentials
+        client_id: "{{ oauth_token_var_client_id }}"
+        client_secret: "{{ oauth_token_secret_client_secret }}"
+        ssl_verify: true
+      register: token_result
+
+    - name: Assert access token returned
+      ansible.builtin.assert:
+        that:
+          - token_result.access_token is defined
+          - token_result.access_token | length > 0
+          - token_result.token_type == "Bearer"
+          - token_result.expires_in | int > 0
+
+- name: "Converge & Verify (Failure: Missing Client Secret)"
+  hosts: instance
+  gather_facts: false
+
+  tasks:
+    - name: Validate missing client secret handling
+      block:
+        - name: Request OAuth token without client secret
+          cd_cluster.pipeline_common.oauth_token:
+            token_url: "{{ oauth_token_secret_keycloak_token_url }}"
+            flow: client_credentials
+            client_id: "{{ oauth_token_var_client_id }}"
+            ssl_verify: true
+          register: oauth_result
+          no_log: true
+
+        - name: Fail because module should not succeed
+          ansible.builtin.fail:
+            msg: "oauth_token unexpectedly succeeded"
+
+      rescue:
+        - name: Assert correct validation error
+          ansible.builtin.assert:
+            that:
+              - "'Missing required parameters for client_credentials: client_secret' in ansible_failed_result.msg"
+
+- name: "Converge & Verify (Failure: Invalid Client Secret)"
+  hosts: instance
+  gather_facts: false
+
+  tasks:
+    - name: Validate invalid credential handling
+      block:
+        - name: Request OAuth token with invalid secret
+          cd_cluster.pipeline_common.oauth_token:
+            token_url: "{{ oauth_token_secret_keycloak_token_url }}"
+            flow: client_credentials
+            client_id: "{{ oauth_token_var_client_id }}"
+            client_secret: "WRONGPASSWORD"
+            ssl_verify: true
+          register: oauth_result
+          no_log: true
+
+        - name: Fail because module should not succeed
+          ansible.builtin.fail:
+            msg: "oauth_token unexpectedly succeeded"
+
+      rescue:
+        - name: Assert authentication failure
+          ansible.builtin.assert:
+            that:
+              - ansible_failed_result.msg == "Failed to obtain OAuth token"
+
+- name: "Converge & Verify (Failure: Invalid Token URL)"
+  hosts: instance
+  gather_facts: false
+
+  tasks:
+    - name: Validate invalid URL handling
+      block:
+        - name: Request OAuth token from invalid endpoint
+          cd_cluster.pipeline_common.oauth_token:
+            token_url: "https://127.0.0.1:1/token"
+            flow: client_credentials
+            client_id: "xxx"
+            client_secret: "yyy"
+            ssl_verify: false
+          register: oauth_result
+
+        - name: Fail because module should not succeed
+          ansible.builtin.fail:
+            msg: "oauth_token unexpectedly succeeded"
+
+      rescue:
+        - name: Assert transport failure captured
+          ansible.builtin.assert:
+            that:
+              - ansible_failed_result.msg == "Failed to obtain OAuth token"
+              - ansible_failed_result.error is defined

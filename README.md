@@ -26,7 +26,10 @@ which requirements are needed.
 ### Modules
 Name | Description
 --- | ---
+[cd_cluster.pipeline_common.oauth_token](http://example.com/repository/blob/main/docs/cd_cluster.pipeline_common.oauth_token_module.rst)|Get OAuth/JWT access token using server-side flows
+[cd_cluster.pipeline_common.register_emitter](http://example.com/repository/blob/main/docs/cd_cluster.pipeline_common.register_emitter_module.rst)|Register signal emitter configuration
 [cd_cluster.pipeline_common.replace_placeholders](http://example.com/repository/blob/main/docs/cd_cluster.pipeline_common.replace_placeholders_module.rst)|Replace custom tokens or text placeholders inside a file
+[cd_cluster.pipeline_common.signal_emit](http://example.com/repository/blob/main/docs/cd_cluster.pipeline_common.signal_emit_module.rst)|Emit a signal using a registered emitter
 
 <!--end collection content-->
 
