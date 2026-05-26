@@ -47,7 +47,7 @@ Recommended usage:
 Name | Description
 --- | ---
 [cd_cluster.pipeline_common.oauth_token](http://example.com/repository/blob/main/docs/cd_cluster.pipeline_common.oauth_token_module.rst)|Get OAuth/JWT access token using server-side flows
-[cd_cluster.pipeline_common.parse_structured_filename](http://example.com/repository/blob/main/docs/cd_cluster.pipeline_common.parse_structured_filename_module.rst)|Extracts structured key-value pairs from a delimited filename string.
+[cd_cluster.pipeline_common.parse_structured_filename](http://example.com/repository/blob/main/docs/cd_cluster.pipeline_common.parse_structured_filename_module.rst)|Extract structured key-value metadata from a delimited filename.
 [cd_cluster.pipeline_common.register_emitter](http://example.com/repository/blob/main/docs/cd_cluster.pipeline_common.register_emitter_module.rst)|Register signal emitter configuration
 [cd_cluster.pipeline_common.replace_placeholders](http://example.com/repository/blob/main/docs/cd_cluster.pipeline_common.replace_placeholders_module.rst)|Replace custom tokens or text placeholders inside a file
 [cd_cluster.pipeline_common.signal_emit](http://example.com/repository/blob/main/docs/cd_cluster.pipeline_common.signal_emit_module.rst)|Emit a signal using a registered emitter

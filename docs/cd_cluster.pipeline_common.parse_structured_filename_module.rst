@@ -5,7 +5,7 @@
 cd_cluster.pipeline_common.parse_structured_filename
 ****************************************************
 
-**Extracts structured key-value pairs from a delimited filename string.**
+**Extract structured key-value metadata from a delimited filename.**
 
 
 
@@ -16,7 +16,7 @@ cd_cluster.pipeline_common.parse_structured_filename
 
 Synopsis
 --------
-- Takes a filename, automatically removes any file extensions (including multi-part extensions like .tar.gz), splits the remaining base name using a user-defined delimiter, and maps the pieces into an ordered list of keys.
+- Takes a filename or path, removes common file extensions (including multi-part extensions such as ``.tar.gz``), splits the remaining base filename using a user-defined delimiter, and maps the extracted fields into user-defined field names.
 
 
 
@@ -45,7 +45,24 @@ Parameters
                 <td>
                 </td>
                 <td>
-                        <div>The character or substring used to separate the fields in the filename.</div>
+                        <div>Delimiter used to separate metadata fields.</div>
+                </td>
+            </tr>
+            <tr>
+                <td colspan="1">
+                    <div class="ansibleOptionAnchor" id="parameter-"></div>
+                    <b>field_names</b>
+                    <a class="ansibleOptionLink" href="#parameter-" title="Permalink to this option"></a>
+                    <div style="font-size: small">
+                        <span style="color: purple">list</span>
+                         / <span style="color: purple">elements=string</span>
+                         / <span style="color: red">required</span>
+                    </div>
+                </td>
+                <td>
+                </td>
+                <td>
+                        <div>Ordered list of field names used to map extracted values.</div>
                 </td>
             </tr>
             <tr>
@@ -61,24 +78,7 @@ Parameters
                 <td>
                 </td>
                 <td>
-                        <div>The full filename or string containing the structured data.</div>
-                </td>
-            </tr>
-            <tr>
-                <td colspan="1">
-                    <div class="ansibleOptionAnchor" id="parameter-"></div>
-                    <b>keys</b>
-                    <a class="ansibleOptionLink" href="#parameter-" title="Permalink to this option"></a>
-                    <div style="font-size: small">
-                        <span style="color: purple">list</span>
-                         / <span style="color: purple">elements=string</span>
-                         / <span style="color: red">required</span>
-                    </div>
-                </td>
-                <td>
-                </td>
-                <td>
-                        <div>An ordered list of keys to pair with the extracted text segments.</div>
+                        <div>Full filename or path containing structured metadata.</div>
                 </td>
             </tr>
     </table>
@@ -92,16 +92,26 @@ Examples
 
 .. code-block:: yaml
 
-    - name: Extract metadata from an artifact filename
-      parse_structured_filename:
-        filename: "hello+--12345+--v1.1.1+---20052026T121212.tar.gz"
+    - name: Extract metadata from structured filename
+      cd_cluster.pipeline_common.parse_structured_filename:
+        filename: "hello+--12345+--v1.1.1+--20052026T121212.tar.gz"
         delimiter: "+--"
-        keys:
+        field_names:
           - name
           - tag
           - version
           - datetime
       register: artifact_metadata
+
+    - name: Extract metadata from absolute path
+      cd_cluster.pipeline_common.parse_structured_filename:
+        filename: "/var/tmp/builds/hello+--12345+--v1.1.1+--20052026T121212.tar.gz"
+        delimiter: "+--"
+        field_names:
+          - name
+          - tag
+          - version
+          - datetime
 
 
 
@@ -120,6 +130,37 @@ Common return values are documented `here <https://docs.ansible.com/ansible/late
             <tr>
                 <td colspan="1">
                     <div class="ansibleOptionAnchor" id="return-"></div>
+                    <b>cleaned_base_name</b>
+                    <a class="ansibleOptionLink" href="#return-" title="Permalink to this return value"></a>
+                    <div style="font-size: small">
+                      <span style="color: purple">string</span>
+                    </div>
+                </td>
+                <td>success</td>
+                <td>
+                            <div>Filename after extension stripping.</div>
+                    <br/>
+                </td>
+            </tr>
+            <tr>
+                <td colspan="1">
+                    <div class="ansibleOptionAnchor" id="return-"></div>
+                    <b>extracted_fields</b>
+                    <a class="ansibleOptionLink" href="#return-" title="Permalink to this return value"></a>
+                    <div style="font-size: small">
+                      <span style="color: purple">list</span>
+                       / <span style="color: purple">elements=string</span>
+                    </div>
+                </td>
+                <td>success</td>
+                <td>
+                            <div>Ordered list of extracted values.</div>
+                    <br/>
+                </td>
+            </tr>
+            <tr>
+                <td colspan="1">
+                    <div class="ansibleOptionAnchor" id="return-"></div>
                     <b>parsed_data</b>
                     <a class="ansibleOptionLink" href="#return-" title="Permalink to this return value"></a>
                     <div style="font-size: small">
@@ -128,8 +169,10 @@ Common return values are documented `here <https://docs.ansible.com/ansible/late
                 </td>
                 <td>success</td>
                 <td>
-                            <div>A dictionary containing the extracted keys and their corresponding values.</div>
+                            <div>Dictionary containing parsed structured metadata.</div>
                     <br/>
+                        <div style="font-size: smaller"><b>Sample:</b></div>
+                        <div style="font-size: smaller; color: blue; word-wrap: break-word; word-break: break-all;">{&#x27;name&#x27;: &#x27;hello&#x27;, &#x27;tag&#x27;: &#x27;12345&#x27;, &#x27;version&#x27;: &#x27;v1.1.1&#x27;, &#x27;datetime&#x27;: &#x27;20052026T121212&#x27;}</div>
                 </td>
             </tr>
     </table>
