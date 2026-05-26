@@ -82,32 +82,25 @@ EXAMPLES = r"""
         options:
           tenant_id: application
           tenant_mode: path
+          verify_ssl: false
   register: emitter_registration
   delegate_to: localhost
   run_once: true
 
-- name: Emit signal
+- name: Emit signal for loki
   signal_emit:
     registration_id: "{{ emitter_registration.registration_id }}"
     signal_id: "sig-001"
-    correlation_id: "{{ tower_workflow_job_id }}"
-    event_type: job_started
-    message: "Job started"
+    correlation_id: "sig-001"
+    event_type: "stage-lifecycle"
+    signal_message: "Start 1 Started"
     payload:
-      job_id: "{{ tower_job_id }}"
-      stage: precheck
+      indexed_data: # For Loki (Low Cardinality data)
+        stage: precheck
+      data:
+        job_id: "j-12345"
   delegate_to: localhost
 
-- name: Emit pipeline completion signal
-  signal_emit:
-    registration_id: "{{ emitter_registration.registration_id }}"
-    correlation_id: "{{ pipeline_id }}"
-    event_type: pipeline_finished
-    message: "Pipeline completed successfully"
-    payload:
-      job_id: "{{ tower_job_id }}"
-      status: success
-  delegate_to: localhost
 """
 
 RETURN = r"""
