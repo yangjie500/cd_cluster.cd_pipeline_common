@@ -1,0 +1,105 @@
+---
+- name: "TEST CASE 1: [SUCCESS SCENARIO] Parse dynamic fields from an absolute path string"
+  block:
+    - name: "[SUCCESS SCENARIO] Process structured absolute path"
+      cd_cluster.pipeline_common.parse_structured_filename:
+        filename: "/var/tmp/builds/hello+--12345+--v1.1.1+--20052026T121212.tar.gz"
+        delimiter: "+--"
+        field_names:
+          - name
+          - tag
+          - version
+          - datetime
+      register: test_success_abs
+
+    - name: "[SUCCESS SCENARIO] Assert absolute path data maps perfectly"
+      ansible.builtin.assert:
+        that:
+          - test_success_abs.failed == false
+          - test_success_abs.parsed_data.name == 'hello'
+          - test_success_abs.parsed_data.tag == '12345'
+          - test_success_abs.parsed_data.version == 'v1.1.1'
+          - test_success_abs.parsed_data.datetime == '20052026T121212'
+
+- name: "TEST CASE 2: [SUCCESS SCENARIO] Parse dynamic fields from a relative path string"
+  block:
+    - name: "[SUCCESS SCENARIO] Process structured relative path"
+      cd_cluster.pipeline_common.parse_structured_filename:
+        filename: "../../downloads/artifacts/hello+--12345+--v1.1.1+--20052026T121212.tar.gz"
+        delimiter: "+--"
+        field_names:
+          - name
+          - tag
+          - version
+          - datetime
+      register: test_success_rel
+
+    - name: "[SUCCESS SCENARIO] Assert relative path maps perfectly"
+      ansible.builtin.assert:
+        that:
+          - test_success_rel.failed == false
+          - test_success_rel.parsed_data.name == 'hello'
+          - test_success_rel.parsed_data.tag == '12345'
+          - test_success_rel.parsed_data.version == 'v1.1.1'
+          - test_success_rel.parsed_data.datetime == '20052026T121212'
+
+- name: "TEST CASE 3: [FAILURE SCENARIO] Catch field name length mismatches"
+  block:
+    - name: "[FAILURE SCENARIO] Attempt to process string with missing field names"
+      cd_cluster.pipeline_common.parse_structured_filename:
+        filename: "hello+--12345+--v1.1.1+--20052026T121212.zip"
+        delimiter: "+--"
+        field_names:
+          - name
+          - tag
+      register: test_failure_field_names
+      ignore_errors: true
+
+    - name: "[FAILURE SCENARIO] Assert module strictly catches field name mismatches"
+      ansible.builtin.assert:
+        that:
+          - test_failure_field_names.failed == true
+          - "'Parsing mismatch' in test_failure_field_names.msg"
+          - "test_failure_field_names.extracted_fields | length == 4"
+
+- name: "TEST CASE 4: [FAILURE SCENARIO] Catch missing values between delimiters"
+  block:
+    - name: "[FAILURE SCENARIO] Attempt to process filename with a missing field value"
+      cd_cluster.pipeline_common.parse_structured_filename:
+        filename: "hello+--+--v1.1.1+--20052026T121212.tar.gz"
+        delimiter: "+--"
+        field_names:
+          - name
+          - tag
+          - version
+          - datetime
+      register: test_failure_missing_value
+      ignore_errors: true
+
+    - name: "[FAILURE SCENARIO] Assert module catches the missing field value"
+      ansible.builtin.assert:
+        that:
+          - test_failure_missing_value.failed == true
+          - "'Parsing mismatch' in test_failure_missing_value.msg"
+          - "test_failure_missing_value.extracted_fields | length == 3"
+          - "test_failure_missing_value.parsed_data.tag == ''"
+
+- name: "TEST CASE 5: [FAILURE SCENARIO] Missing Input"
+  block:
+    - name: "[FAILURE SCENARIO] Attempt to process filename with a missing input"
+      cd_cluster.pipeline_common.parse_structured_filename:
+        filename: ""
+        delimiter: "+--"
+        field_names:
+          - name
+          - tag
+          - version
+          - datetime
+      register: test_failure_missing_input
+      ignore_errors: true
+
+    - name: "[FAILURE SCENARIO] Assert module catches missing input"
+      ansible.builtin.assert:
+        that:
+          - test_failure_missing_input.failed == true
+          - "'cannot be empty' in test_failure_missing_input.msg"
