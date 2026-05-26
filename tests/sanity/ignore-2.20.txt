@@ -1,1 +1,0 @@
-plugins/modules/oauth_token.py validate-modules:no-log-needed

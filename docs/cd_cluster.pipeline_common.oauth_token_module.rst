@@ -121,6 +121,22 @@ Parameters
             <tr>
                 <td colspan="1">
                     <div class="ansibleOptionAnchor" id="parameter-"></div>
+                    <b>oauth_endpoint</b>
+                    <a class="ansibleOptionLink" href="#parameter-" title="Permalink to this option"></a>
+                    <div style="font-size: small">
+                        <span style="color: purple">string</span>
+                         / <span style="color: red">required</span>
+                    </div>
+                </td>
+                <td>
+                </td>
+                <td>
+                        <div>OAuth token endpoint.</div>
+                </td>
+            </tr>
+            <tr>
+                <td colspan="1">
+                    <div class="ansibleOptionAnchor" id="parameter-"></div>
                     <b>password</b>
                     <a class="ansibleOptionLink" href="#parameter-" title="Permalink to this option"></a>
                     <div style="font-size: small">
@@ -232,22 +248,6 @@ Parameters
             <tr>
                 <td colspan="1">
                     <div class="ansibleOptionAnchor" id="parameter-"></div>
-                    <b>token_url</b>
-                    <a class="ansibleOptionLink" href="#parameter-" title="Permalink to this option"></a>
-                    <div style="font-size: small">
-                        <span style="color: purple">string</span>
-                         / <span style="color: red">required</span>
-                    </div>
-                </td>
-                <td>
-                </td>
-                <td>
-                        <div>OAuth token endpoint.</div>
-                </td>
-            </tr>
-            <tr>
-                <td colspan="1">
-                    <div class="ansibleOptionAnchor" id="parameter-"></div>
                     <b>username</b>
                     <a class="ansibleOptionLink" href="#parameter-" title="Permalink to this option"></a>
                     <div style="font-size: small">
@@ -273,7 +273,7 @@ Examples
 
     - name: Get token using client credentials
       oauth_token:
-        token_url: "https://keycloak.example.com/realms/demo/protocol/openid-connect/token"
+        oauth_endpoint: "https://keycloak.example.com/realms/demo/protocol/openid-connect/token"
         flow: client_credentials
         client_id: loki-client
         client_secret: "{{ client_secret }}"
@@ -297,7 +297,7 @@ Examples
 
     - name: Get token using direct access grant
       oauth_token:
-        token_url: "https://keycloak.example.com/realms/demo/protocol/openid-connect/token"
+        oauth_endpoint: "https://keycloak.example.com/realms/demo/protocol/openid-connect/token"
         flow: password
         client_id: cli-client
         client_secret: "{{ client_secret }}"

@@ -6,7 +6,7 @@
   tasks:
     - name: Request OAuth access token
       cd_cluster.pipeline_common.oauth_token:
-        token_url: "{{ oauth_token_secret_keycloak_token_url }}"
+        oauth_endpoint: "{{ oauth_token_secret_keycloak_token_url }}"
         flow: client_credentials
         client_id: "{{ oauth_token_var_client_id }}"
         client_secret: "{{ oauth_token_secret_client_secret }}"
@@ -30,7 +30,7 @@
       block:
         - name: Request OAuth token without client secret
           cd_cluster.pipeline_common.oauth_token:
-            token_url: "{{ oauth_token_secret_keycloak_token_url }}"
+            oauth_endpoint: "{{ oauth_token_secret_keycloak_token_url }}"
             flow: client_credentials
             client_id: "{{ oauth_token_var_client_id }}"
             ssl_verify: true
@@ -56,7 +56,7 @@
       block:
         - name: Request OAuth token with invalid secret
           cd_cluster.pipeline_common.oauth_token:
-            token_url: "{{ oauth_token_secret_keycloak_token_url }}"
+            oauth_endpoint: "{{ oauth_token_secret_keycloak_token_url }}"
             flow: client_credentials
             client_id: "{{ oauth_token_var_client_id }}"
             client_secret: "WRONGPASSWORD"
@@ -83,7 +83,7 @@
       block:
         - name: Request OAuth token from invalid endpoint
           cd_cluster.pipeline_common.oauth_token:
-            token_url: "https://127.0.0.1:1/token"
+            oauth_endpoint: "https://127.0.0.1:1/token"
             flow: client_credentials
             client_id: "xxx"
             client_secret: "yyy"

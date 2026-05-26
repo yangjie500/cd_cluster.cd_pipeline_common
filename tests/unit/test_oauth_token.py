@@ -10,7 +10,7 @@ from plugins.modules import oauth_token
 @pytest.fixture
 def base_params() -> dict:
     return {
-        "token_url": "https://idp.example.com/token",
+        "oauth_endpoint": "https://idp.example.com/token",
         "flow": "client_credentials",
         "client_id": "client-a",
         "client_secret": "secret",

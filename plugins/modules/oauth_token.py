@@ -24,7 +24,7 @@ description:
     token exchange, and refresh token flow.
 
 options:
-  token_url:
+  oauth_endpoint:
     description:
       - OAuth token endpoint.
     type: str
@@ -124,7 +124,7 @@ author:
 EXAMPLES = r"""
 - name: Get token using client credentials
   oauth_token:
-    token_url: "https://keycloak.example.com/realms/demo/protocol/openid-connect/token"
+    oauth_endpoint: "https://keycloak.example.com/realms/demo/protocol/openid-connect/token"
     flow: client_credentials
     client_id: loki-client
     client_secret: "{{ client_secret }}"
@@ -148,7 +148,7 @@ EXAMPLES = r"""
 
 - name: Get token using direct access grant
   oauth_token:
-    token_url: "https://keycloak.example.com/realms/demo/protocol/openid-connect/token"
+    oauth_endpoint: "https://keycloak.example.com/realms/demo/protocol/openid-connect/token"
     flow: password
     client_id: cli-client
     client_secret: "{{ client_secret }}"
@@ -249,7 +249,7 @@ def build_token_request(module: AnsibleModule) -> TransportRequest:
 
     return TransportRequest(
         method="POST",
-        target=module.params["token_url"],
+        target=module.params["oauth_endpoint"],
         headers={
             "Content-Type": "application/x-www-form-urlencoded",
             "Accept": "application/json",
@@ -280,7 +280,7 @@ def validate_required(module: AnsibleModule) -> None:
 def main() -> None:
     module = AnsibleModule(
         argument_spec={
-            "token_url": {"type": "str", "required": True},
+            "oauth_endpoint": {"type": "str", "required": True},
             "flow": {
                 "type": "str",
                 "required": True,
