@@ -90,8 +90,8 @@ EXAMPLES = r"""
       - service: loki
         endpoint: https://custom.portal/callback
         options:
-            bearer_token: "asdasdasd
-            verify_ssl: false
+          bearer_token: asdasdasd
+          verify_ssl: false
 
 
 - name: Register multiple emitters
@@ -102,7 +102,7 @@ EXAMPLES = r"""
         options:
           tenant_id: production
           tenant_mode: path
-          bearer_token: "asdasdasd"
+          bearer_token: asdasdasd
           verify_ssl: false
 
       - service: splunk

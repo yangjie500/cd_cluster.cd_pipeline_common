@@ -100,7 +100,6 @@ EXAMPLES = r"""
       data:
         job_id: "j-12345"
   delegate_to: localhost
-
 """
 
 RETURN = r"""
