@@ -1,3 +1,5 @@
+import json
+
 from unittest.mock import Mock, patch
 
 import pytest
@@ -29,12 +31,19 @@ def test_loki_emitter_uses_header_tenant(
     )
 
     signal = Signal(
+        signal_id="sig-123",
+        correlation_id="corr-123",
         event_type="job_started",
         message="Job started",
         payload={
-            "job_id": "123",
-            "status": "started",
-            "count": 10,
+            "indexed_data": {
+                "job_status": "started",
+                "stage": "precheck",
+            },
+            "data": {
+                "job_id": "123",
+                "count": 10,
+            },
         },
     )
 
@@ -54,22 +63,25 @@ def test_loki_emitter_uses_header_tenant(
         "X-Scope-OrgID": "tenant-a",
     }
 
-    assert request.json == {
-        "streams": [
-            {
-                "stream": {
-                    "event_type": "job_started",
-                    "job_id": "123",
-                    "status": "started",
-                },
-                "values": [
-                    [
-                        "1710000000000000000",
-                        "Job started",
-                    ],
-                ],
-            },
-        ],
+    log_body = json.loads(request.json["streams"][0]["values"][0][1])
+
+    assert request.json["streams"][0]["stream"] == {
+        "event_type": "job_started",
+        "job_status": "started",
+        "stage": "precheck",
+    }
+
+    assert request.json["streams"][0]["values"][0][0] == ("1710000000000000000")
+
+    assert log_body == {
+        "signal_id": "sig-123",
+        "correlation_id": "corr-123",
+        "event_type": "job_started",
+        "message": "Job started",
+        "data": {
+            "job_id": "123",
+            "count": 10,
+        },
     }
 
 
@@ -89,17 +101,24 @@ def test_loki_emitter_uses_path_tenant(
     )
 
     emitter = LokiEmitter(
-        endpoint="https://gateway.example.com/api/logs/v1/{tenant}/loki/api/v1/push",
+        endpoint=("https://gateway.example.com/api/logs/v1/" "{tenant}/loki/api/v1/push"),
         transport=transport,
         tenant_id="application",
         tenant_mode="path",
     )
 
     signal = Signal(
+        signal_id="sig-456",
+        correlation_id="corr-456",
         event_type="deploy_started",
         message="Deploy started",
         payload={
-            "app": "payment",
+            "indexed_data": {
+                "app": "payment",
+            },
+            "data": {
+                "deployment_id": "deploy-123",
+            },
         },
     )
 
@@ -122,6 +141,18 @@ def test_loki_emitter_uses_path_tenant(
         "app": "payment",
     }
 
+    log_body = json.loads(request.json["streams"][0]["values"][0][1])
+
+    assert log_body == {
+        "signal_id": "sig-456",
+        "correlation_id": "corr-456",
+        "event_type": "deploy_started",
+        "message": "Deploy started",
+        "data": {
+            "deployment_id": "deploy-123",
+        },
+    }
+
 
 def test_loki_emitter_header_mode_requires_tenant_id() -> None:
     transport = Mock()
@@ -137,7 +168,15 @@ def test_loki_emitter_header_mode_requires_tenant_id() -> None:
         ValueError,
         match="tenant_id is required when tenant_mode='header'",
     ):
-        emitter.emit(Signal(event_type="job_started", message="Job started"))
+        emitter.emit(
+            Signal(
+                signal_id="sig-123",
+                correlation_id=None,
+                event_type="job_started",
+                message="Job started",
+                payload={},
+            ),
+        )
 
     transport.send.assert_not_called()
 
@@ -156,6 +195,14 @@ def test_loki_emitter_path_mode_requires_tenant_id() -> None:
         ValueError,
         match="tenant_id is required when tenant_mode='path'",
     ):
-        emitter.emit(Signal(event_type="job_started", message="Job started"))
+        emitter.emit(
+            Signal(
+                signal_id="sig-123",
+                correlation_id=None,
+                event_type="job_started",
+                message="Job started",
+                payload={},
+            ),
+        )
 
     transport.send.assert_not_called()

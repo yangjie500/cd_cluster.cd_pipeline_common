@@ -5,7 +5,7 @@ import json
 from pathlib import Path
 from unittest.mock import Mock, patch
 
-import plugins.modules.register_emitter as register_emitter
+from plugins.modules import register_emitter
 
 
 @patch("plugins.modules.register_emitter.AnsibleModule")

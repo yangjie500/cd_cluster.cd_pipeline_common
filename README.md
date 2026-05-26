@@ -20,6 +20,26 @@ Some modules and plugins require external libraries. Please check the
 requirements for each plugin or module you use in the documentation to find out
 which requirements are needed.
 
+## Python Dependencies
+
+This collection requires the following Python libraries:
+
+- requests
+- tenacity
+
+Dependencies must exist on the machine where the module executes.
+
+### Controller-side execution (recommended)
+
+Recommended usage:
+
+```yaml
+- name: Emit signal
+  cd_cluster.pipeline_common.signal_emit:
+    ...
+  delegate_to: localhost
+```
+
 ## Included content
 
 <!--start collection content-->

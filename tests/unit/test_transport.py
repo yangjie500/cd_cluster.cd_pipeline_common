@@ -45,6 +45,7 @@ def test_requests_http_transport_success(
         json={"hello": "world"},
         data=None,
         timeout=10,
+        verify=True,
     )
 
 

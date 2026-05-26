@@ -1,10 +1,43 @@
 from __future__ import annotations
 
+import traceback
+
 from abc import ABC, abstractmethod
 
-import requests
 
-from tenacity import retry, retry_if_exception_type, stop_after_attempt, wait_random_exponential
+try:
+    import requests
+
+    HAS_REQUESTS = True
+    REQUESTS_IMPORT_ERROR = ""
+    # Store the exception type reference safely
+    REQUESTS_EXC_TYPE = requests.RequestException
+except ImportError:
+    HAS_REQUESTS = False
+    REQUESTS_IMPORT_ERROR = traceback.format_exc()
+
+    # Create a dummy Exception class so the tuple logic doesn't crash
+    class DummyRequestsException(Exception):
+        pass
+
+    REQUESTS_EXC_TYPE = DummyRequestsException
+
+try:
+    from tenacity import retry, retry_if_exception_type, stop_after_attempt, wait_random_exponential
+except ImportError:
+
+    def stop_after_attempt(*args, **kwargs):
+        return None
+
+    def wait_random_exponential(*args, **kwargs):
+        return None
+
+    def retry_if_exception_type(*args, **kwargs):
+        return None
+
+    def retry(*args, **kwargs):
+        return lambda func: func
+
 
 from ansible_collections.cd_cluster.pipeline_common.plugins.module_utils.transport.models import (
     TransportRequest,
@@ -46,7 +79,7 @@ class RequestsHttpTransport(Transport):
         ),
         retry=retry_if_exception_type(
             (
-                requests.RequestException,
+                REQUESTS_EXC_TYPE,
                 TransportError,
             ),
         ),

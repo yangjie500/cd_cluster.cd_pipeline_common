@@ -4,6 +4,7 @@ from typing import Any
 
 from ansible_collections.cd_cluster.pipeline_common.plugins.module_utils.emitter.emitter import (
     ChainEmitter,
+    CloudPortalEmitter,
     Emitter,
     LokiEmitter,
 )
@@ -26,6 +27,8 @@ def create_emitter(
     transport: Transport,
     options: dict[str, Any] | None = None,
 ) -> Emitter:
+    """Create emitter for selected service."""
+
     options = options or {}
 
     if service == "loki":
@@ -34,6 +37,13 @@ def create_emitter(
             transport=transport,
             tenant_id=options.get("tenant_id"),
             tenant_mode=options.get("tenant_mode", "header"),
+            bearer_token=options.get("bearer_token"),
+        )
+
+    if service == "custom_event":
+        return CloudPortalEmitter(
+            endpoint=endpoint,
+            transport=transport,
             bearer_token=options.get("bearer_token"),
         )
 

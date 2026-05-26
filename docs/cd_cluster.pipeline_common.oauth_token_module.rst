@@ -16,6 +16,8 @@ cd_cluster.pipeline_common.oauth_token
 
 Synopsis
 --------
+- This module requires the Python libraries ``requests`` and ``tenacity``.
+- When executing on managed nodes, the dependencies must be installed on those managed nodes.
 - Exchanges credentials or assertions for an access token.
 - Supports client credentials, direct access grant/password grant, JWT bearer grant, token exchange, and refresh token flow.
 

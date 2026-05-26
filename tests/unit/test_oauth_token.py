@@ -4,7 +4,7 @@ from unittest.mock import Mock, patch
 
 import pytest
 
-import plugins.modules.oauth_token as oauth_token
+from plugins.modules import oauth_token
 
 
 @pytest.fixture

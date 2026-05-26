@@ -1,4 +1,9 @@
 #!/usr/bin/python
+# -*- coding: utf-8 -*-
+
+# Copyright: (c) 2026, Yang Jie
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
+
 
 from __future__ import absolute_import, annotations, division, print_function
 
@@ -33,7 +38,7 @@ options:
         type: str
         choices:
           - loki
-          - splunk
+          - cloudportal
 
       transport:
         description:
@@ -55,6 +60,7 @@ options:
           - Service-specific emitter configuration.
           - May contain authentication credentials or tokens.
         required: false
+        default: {}
         type: dict
 
 notes:
@@ -74,14 +80,6 @@ EXAMPLES = r"""
         endpoint: https://loki.example.com/loki/api/v1/push
         options:
           tenant_id: production
-
-- name: Register Splunk emitter
-  register_emitter:
-    emitters:
-      - service: splunk
-        endpoint: https://splunk.example.com:8088/services/collector
-        options:
-          token: splunk-hec-token
 
 - name: Register multiple emitters
   register_emitter:
@@ -232,9 +230,7 @@ def main() -> None:
                     "service": {
                         "type": "str",
                         "required": True,
-                        "choices": [
-                            "loki",
-                        ],
+                        "choices": ["loki", "cloudportal"],
                     },
                     "transport": {
                         "type": "str",

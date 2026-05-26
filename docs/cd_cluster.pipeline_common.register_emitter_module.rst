@@ -80,6 +80,7 @@ Parameters
                     </div>
                 </td>
                 <td>
+                        <b>Default:</b><br/><div style="color: blue">{}</div>
                 </td>
                 <td>
                         <div>Service-specific emitter configuration.</div>
@@ -100,7 +101,7 @@ Parameters
                 <td>
                         <ul style="margin: 0; padding: 0"><b>Choices:</b>
                                     <li>loki</li>
-                                    <li>splunk</li>
+                                    <li>cloudportal</li>
                         </ul>
                 </td>
                 <td>
@@ -153,14 +154,6 @@ Examples
             endpoint: https://loki.example.com/loki/api/v1/push
             options:
               tenant_id: production
-
-    - name: Register Splunk emitter
-      register_emitter:
-        emitters:
-          - service: splunk
-            endpoint: https://splunk.example.com:8088/services/collector
-            options:
-              token: splunk-hec-token
 
     - name: Register multiple emitters
       register_emitter:

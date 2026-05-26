@@ -1,4 +1,9 @@
 #!/usr/bin/python
+# -*- coding: utf-8 -*-
+
+# Copyright: (c) 2026, Yang Jie
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
+
 
 from __future__ import absolute_import, annotations, division, print_function
 
@@ -12,6 +17,8 @@ module: oauth_token
 short_description: Get OAuth/JWT access token using server-side flows
 
 description:
+  - This module requires the Python libraries C(requests) and C(tenacity).
+  - When executing on managed nodes, the dependencies must be installed on those managed nodes.
   - Exchanges credentials or assertions for an access token.
   - Supports client credentials, direct access grant/password grant, JWT bearer grant,
     token exchange, and refresh token flow.
