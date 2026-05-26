@@ -30,6 +30,8 @@ jobs:
       s3_api_secret: ${{ secrets.s3_api_secret }}
       gitlab_registry_token: ${{ secrets.gitlab_registry_token }}
       sample_image_created_by_podman_url: ${{ secrets.sample_image_created_by_podman_url }}
+      keycloak_client_secret: ${{ secrets.keycloak_client_secret }}
+      keycloak_token_url: ${{ secrets.keycloak_token_url }}
 
     steps:
       - name: Checkout repository

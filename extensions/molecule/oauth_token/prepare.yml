@@ -1,0 +1,29 @@
+---
+- name: Prepare
+  hosts: instance
+  gather_facts: false
+  tasks:
+    - name: Install system dependencies
+      ansible.builtin.command:
+        cmd: >
+          apk add --no-cache
+          python3
+          py3-pip
+          bash
+          curl
+          ca-certificates
+      changed_when: true
+
+    - name: Install Python libraries
+      ansible.builtin.command:
+        cmd: >
+          pip3 install
+          --break-system-packages
+          requests
+          tenacity
+      changed_when: true
+
+    - name: Update CA certificates
+      ansible.builtin.command:
+        cmd: update-ca-certificates
+      changed_when: true

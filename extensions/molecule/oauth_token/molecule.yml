@@ -1,0 +1,37 @@
+---
+driver:
+  name: docker
+
+ansible:
+  executor:
+    backend: ansible-playbook
+
+provisioner:
+  name: ansible
+  config_options:
+    defaults:
+      # Uses the absolute path of your project to safely find the roles folder
+      roles_path: ${MOLECULE_PROJECT_DIRECTORY}/roles
+      gathering: smart
+      fact_caching: jsonfile
+      fact_caching_connection: /tmp/molecule_facts_cache
+      fact_caching_timeout: 7200
+  inventory:
+    group_vars:
+      all:
+        oauth_token_var_client_id: "cd_cluster"
+        oauth_token_secret_client_secret: "${keycloak_client_secret}"
+        oauth_token_secret_keycloak_token_url: "${keycloak_token_url}"
+
+platforms:
+  - name: instance
+    image: docker.io/alpine:3.23.3
+    privileged: false
+
+scenario:
+  name: oauth_token
+  test_sequence:
+    - create
+    - prepare
+    - converge
+    - destroy

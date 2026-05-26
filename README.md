@@ -20,13 +20,36 @@ Some modules and plugins require external libraries. Please check the
 requirements for each plugin or module you use in the documentation to find out
 which requirements are needed.
 
+## Python Dependencies
+
+This collection requires the following Python libraries:
+
+- requests
+- tenacity
+
+Dependencies must exist on the machine where the module executes.
+
+### Controller-side execution (recommended)
+
+Recommended usage:
+
+```yaml
+- name: Emit signal
+  cd_cluster.pipeline_common.signal_emit:
+    ...
+  delegate_to: localhost
+```
+
 ## Included content
 
 <!--start collection content-->
 ### Modules
 Name | Description
 --- | ---
+[cd_cluster.pipeline_common.oauth_token](http://example.com/repository/blob/main/docs/cd_cluster.pipeline_common.oauth_token_module.rst)|Get OAuth/JWT access token using server-side flows
+[cd_cluster.pipeline_common.register_emitter](http://example.com/repository/blob/main/docs/cd_cluster.pipeline_common.register_emitter_module.rst)|Register signal emitter configuration
 [cd_cluster.pipeline_common.replace_placeholders](http://example.com/repository/blob/main/docs/cd_cluster.pipeline_common.replace_placeholders_module.rst)|Replace custom tokens or text placeholders inside a file
+[cd_cluster.pipeline_common.signal_emit](http://example.com/repository/blob/main/docs/cd_cluster.pipeline_common.signal_emit_module.rst)|Emit a signal using a registered emitter
 
 <!--end collection content-->
 
