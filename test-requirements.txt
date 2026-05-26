@@ -76,3 +76,6 @@ urllib3==2.6.3
 virtualenv==21.2.4
 wcmatch==10.1
 yamllint==1.38.0
+
+requests
+tenacity

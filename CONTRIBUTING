@@ -19,6 +19,7 @@ python -m pip install --upgrade pip
 pip3 install docsible
 pip3 install ansible-dev-tools
 pip3 install molecule-plugins[docker]
+pip3 install tenacity
 pip install pre-commit
 sudo dnf install -y rsync
 
