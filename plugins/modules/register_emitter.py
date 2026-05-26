@@ -80,12 +80,30 @@ EXAMPLES = r"""
         endpoint: https://loki.example.com/loki/api/v1/push
         options:
           tenant_id: production
+          tenant_mode: path
+          bearer_token: "asdasdasd"
+          verify_ssl: false
+
+- name: Register CloudPortal emitter
+  register_emitter:
+    emitters:
+      - service: loki
+        endpoint: https://custom.portal/callback
+        options:
+            bearer_token: "asdasdasd
+            verify_ssl: false
+
 
 - name: Register multiple emitters
   register_emitter:
     emitters:
       - service: loki
         endpoint: https://loki.example.com/loki/api/v1/push
+        options:
+          tenant_id: production
+          tenant_mode: path
+          bearer_token: "asdasdasd"
+          verify_ssl: false
 
       - service: splunk
         endpoint: https://splunk.example.com:8088/services/collector

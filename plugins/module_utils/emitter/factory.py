@@ -38,6 +38,7 @@ def create_emitter(
             tenant_id=options.get("tenant_id"),
             tenant_mode=options.get("tenant_mode", "header"),
             bearer_token=options.get("bearer_token"),
+            verify_ssl=options.get("verify_ssl"),
         )
 
     if service == "custom_event":
@@ -45,6 +46,7 @@ def create_emitter(
             endpoint=endpoint,
             transport=transport,
             bearer_token=options.get("bearer_token"),
+            verify_ssl=options.get("verify_ssl"),
         )
 
     raise ValueError(f"Unsupported emitter service: {service}")

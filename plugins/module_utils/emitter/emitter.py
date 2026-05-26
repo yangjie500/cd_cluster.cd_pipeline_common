@@ -60,12 +60,14 @@ class LokiEmitter(Emitter):
         tenant_id: str | None = None,
         tenant_mode: Literal["header", "path", "none"] = "header",
         bearer_token: str | None = None,
+        verify_ssl: bool = False,
     ) -> None:
         self.endpoint = endpoint
         self.transport = transport
         self.tenant_id = tenant_id
         self.tenant_mode = tenant_mode
         self.bearer_token = bearer_token
+        self.verify_ssl = verify_ssl
 
     def _build_target(self) -> str:
         if self.tenant_mode == "path":
@@ -161,6 +163,7 @@ class LokiEmitter(Emitter):
             target=self._build_target(),
             headers=self._build_headers(),
             json=loki_payload,
+            ssl_verify=self.verify_ssl,
         )
 
         return self.transport.send(request)
@@ -174,10 +177,12 @@ class CloudPortalEmitter(Emitter):
         endpoint: str,
         transport: Transport,
         bearer_token: str | None = None,
+        verify_ssl: bool = False,
     ) -> None:
         self.endpoint = endpoint
         self.transport = transport
         self.bearer_token = bearer_token
+        self.verify_ssl = verify_ssl
 
     def _build_headers(self) -> dict[str, str]:
         """Build HTTP request headers."""
@@ -247,6 +252,7 @@ class CloudPortalEmitter(Emitter):
             target=self.endpoint,
             headers=self._build_headers(),
             json=self._build_body(signal),
+            ssl_verify=self.verify_ssl,
         )
 
         return self.transport.send(request)
