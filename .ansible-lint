@@ -1,0 +1,3 @@
+mock_modules:
+  - community.docker.docker_container_info
+  - community.general.archive
