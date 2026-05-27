@@ -1,0 +1,44 @@
+---
+driver:
+  name: docker
+
+ansible:
+  executor:
+    backend: ansible-playbook
+
+provisioner:
+  name: ansible
+  config_options:
+    defaults:
+      # Uses the absolute path of your project to safely find the roles folder
+      roles_path: ${MOLECULE_PROJECT_DIRECTORY}/roles
+      gathering: smart
+      fact_caching: jsonfile
+      fact_caching_connection: /tmp/molecule_facts_cache
+      fact_caching_timeout: 7200
+  inventory:
+    group_vars:
+      all:
+        registry_image_sync_var_registry_url: "registry.gitlab.com/cd-cluster/write-repository-molecule-test"
+        registry_image_sync_secret_registry_token: "${gitlab_registry_token}"
+        registry_image_sync_var_src_image_name: "my-redis"
+        registry_image_sync_var_src_image_tag: "5.0.0"
+        registry_image_sync_var_src_image_tag_wo_signature: "4.0.0"
+        registry_image_sync_var_dest_image_name: "his-redis"
+        registry_image_sync_var_dest_image_tag: "5.0.0"
+        registry_image_sync_var_dest_image_tag_wo_signature: "4.0.0"
+        registry_image_sync_var_signature_tag: "sha256-8ee8b1e8e962142753270886f52d00a3fa0ebb64ed6205566aae7baa3c9b6b9d.sig"
+        registry_image_sync_var_gitlab_project_id: 81950682
+        registry_image_sync_var_gitlab_repo_id: 11504048
+platforms:
+  - name: instance
+    image: docker.io/alpine:3.23.3
+    privileged: false
+
+scenario:
+  name: registry_image_sync
+  test_sequence:
+    - create
+    - prepare
+    - converge
+    - destroy

@@ -1,0 +1,194 @@
+---
+- name: "[INFO] Role Configuration: registry_image_sync"
+  ansible.builtin.debug:
+    msg:
+      - "--- SOURCE CONFIGURATION ---"
+      - "Src Registry: {{ registry_image_sync_src_registry_url | default('UNDEFINED', true) }}"
+      - "Src Image Name: {{ registry_image_sync_src_image_name | default('UNDEFINED', true) }}"
+      - "Src Image Tag: {{ registry_image_sync_src_image_tag | default('UNDEFINED', true) }}"
+      - "Src TLS Verify: {{ registry_image_sync_src_tls_verify | default('UNDEFINED', true) }}"
+      - "--- DESTINATION CONFIGURATION ---"
+      - "Dest Registry: {{ registry_image_sync_dest_registry_url | default('UNDEFINED', true) }}"
+      - "Dest Image Name: {{ registry_image_sync_dest_image_name | default('UNDEFINED', true) }}"
+      - "Dest Image Tag: {{ registry_image_sync_dest_image_tag | default('UNDEFINED', true) }}"
+      - "Dest TLS Verify: {{ registry_image_sync_dest_tls_verify | default('UNDEFINED', true) }}"
+
+- name: "[INFO] Sanitize input variables (set defaults)"
+  ansible.builtin.set_fact:
+    registry_image_sync_src_registry_url: "{{ registry_image_sync_src_registry_url | default('', true) | trim }}"
+    registry_image_sync_dest_registry_url: "{{ registry_image_sync_dest_registry_url | default('', true) | trim }}"
+    registry_image_sync_src_username: "{{ registry_image_sync_src_username | default('', true) | trim }}"
+    registry_image_sync_src_password: "{{ registry_image_sync_src_password | default('', true) | trim }}"
+    registry_image_sync_dest_username: "{{ registry_image_sync_dest_username | default('', true) | trim }}"
+    registry_image_sync_dest_password: "{{ registry_image_sync_dest_password | default('', true) | trim }}"
+    registry_image_sync_src_image_name: "{{ registry_image_sync_src_image_name | default('', true) | trim }}"
+    registry_image_sync_src_image_tag: "{{ registry_image_sync_src_image_tag | default('', true) | trim }}"
+    registry_image_sync_dest_image_name: "{{ registry_image_sync_dest_image_name | default('', true) | trim }}"
+    registry_image_sync_dest_image_tag: "{{ registry_image_sync_dest_image_tag | default('', true) | trim }}"
+    registry_image_sync_src_tls_verify: "{{ registry_image_sync_src_tls_verify | default(true) | bool }}"
+    registry_image_sync_dest_tls_verify: "{{ registry_image_sync_dest_tls_verify | default(true) | bool }}"
+
+- name: "[INFO] Initialize role tracking variables"
+  ansible.builtin.set_fact:
+    registry_image_sync_tracked_files_modified: []
+    registry_image_sync_tracked_files_deleted: []
+    registry_image_sync_tracked_files_created: []
+    registry_image_sync_tracked_custom_facts: {}
+    registry_image_sync_failure_message: ""
+    registry_image_sync_failure_category: ""
+    registry_image_sync_has_signature: false
+    registry_image_sync_src_digest: ""
+
+- name: Manage Skopeo Container Image Transfer
+  block:
+    - name: Construct complete image URLs
+      ansible.builtin.set_fact:
+        registry_image_sync_full_src_url: >-
+          {{ registry_image_sync_src_registry_url -}}
+          {%- if registry_image_sync_src_image_name | length > 0 -%}
+            /{{ registry_image_sync_src_image_name }}
+          {%- endif -%}
+          :{{ registry_image_sync_src_image_tag }}
+        registry_image_sync_full_dest_url: >-
+          {{ registry_image_sync_dest_registry_url -}}
+          {%- if registry_image_sync_dest_image_name | length > 0 -%}
+            /{{ registry_image_sync_dest_image_name }}
+          {%- endif -%}
+          :{{ registry_image_sync_dest_image_tag }}
+
+    - name: Log into source registry via Skopeo
+      ansible.builtin.command: >
+        skopeo login
+        --username "{{ registry_image_sync_src_username }}"
+        --password "{{ registry_image_sync_src_password }}"
+        --tls-verify={{ registry_image_sync_src_tls_verify | lower }}
+        "{{ registry_image_sync_src_registry_url }}"
+      when: registry_image_sync_src_username | length > 0
+      changed_when: true
+      no_log: true
+
+    - name: Log into destination registry via Skopeo
+      ansible.builtin.command: >
+        skopeo login
+        --username "{{ registry_image_sync_dest_username }}"
+        --password "{{ registry_image_sync_dest_password }}"
+        --tls-verify={{ registry_image_sync_dest_tls_verify | lower }}
+        "{{ registry_image_sync_dest_registry_url }}"
+      when: registry_image_sync_dest_username | length > 0
+      changed_when: true
+      no_log: true
+
+    - name: Execute Skopeo core image sync copy
+      ansible.builtin.command: >
+        skopeo copy
+        --preserve-digests
+        --src-tls-verify={{ registry_image_sync_src_tls_verify | lower }}
+        --dest-tls-verify={{ registry_image_sync_dest_tls_verify | lower }}
+        "docker://{{ registry_image_sync_full_src_url }}"
+        "docker://{{ registry_image_sync_full_dest_url }}"
+      changed_when: true
+
+    - name: Inspect source image to pull its structural Digest hash
+      ansible.builtin.command: >
+        skopeo inspect
+        --tls-verify={{ registry_image_sync_src_tls_verify | lower }}
+        --format "{{ '{{' }} .Digest {{ '}}' }}"
+        "docker://{{ registry_image_sync_full_src_url }}"
+      register: registry_image_sync_inspect_raw
+      changed_when: false
+
+    - name: Parse image digest fact and format as cosign signature tag
+      ansible.builtin.set_fact:
+        registry_image_sync_src_digest: "{{ registry_image_sync_inspect_raw.stdout | trim }}"
+
+    - name: Create the signature tag
+      ansible.builtin.set_fact:
+        registry_image_sync_src_image_signature: "{{ registry_image_sync_inspect_raw.stdout | trim | regex_replace(':', '-') }}.sig"
+
+    - name: "[INFO] Showing signature tag"
+      ansible.builtin.debug:
+        var: registry_image_sync_src_image_signature
+
+    - name: Check source registry for the explicit existence of a signature tag
+      ansible.builtin.command: >
+        skopeo inspect
+        --tls-verify={{ registry_image_sync_src_tls_verify | lower }}
+        "docker://{{ registry_image_sync_src_registry_url }}/{{
+        registry_image_sync_src_image_name }}:{{
+        registry_image_sync_src_image_signature }}"
+      register: registry_image_sync_sig_check
+      ignore_errors: true
+      changed_when: false
+
+    - name: Mark signature presence flag state
+      ansible.builtin.set_fact:
+        registry_image_sync_has_signature: "{{ registry_image_sync_sig_check.rc == 0 }}"
+
+    - name: Copy signature tag over to target destination registry if found
+      ansible.builtin.command: >
+        skopeo copy
+        --preserve-digests
+        --src-tls-verify={{ registry_image_sync_src_tls_verify | lower }}
+        --dest-tls-verify={{ registry_image_sync_dest_tls_verify | lower }}
+        "docker://{{ registry_image_sync_src_registry_url }}/{{
+        registry_image_sync_src_image_name }}:{{
+        registry_image_sync_src_image_signature }}"
+        "docker://{{ registry_image_sync_dest_registry_url }}/{{
+        registry_image_sync_dest_image_name }}:{{
+        registry_image_sync_src_image_signature }}"
+      when: registry_image_sync_has_signature | bool
+      changed_when: true
+
+    - name: "[INFO] Update custom facts with operation output"
+      ansible.builtin.set_fact:
+        registry_image_sync_tracked_custom_facts:
+          transfer_status: "success"
+          source_image: "{{ registry_image_sync_full_src_url }}"
+          destination_image: "{{ registry_image_sync_full_dest_url }}"
+          image_digest: "{{ registry_image_sync_src_digest }}"
+          signature_transferred: "{{ registry_image_sync_has_signature }}"
+
+  rescue:
+    - name: "[ERROR] Record the exact task failure"
+      ansible.builtin.set_fact:
+        registry_image_sync_failure_message: >-
+          {{
+            ansible_failed_result.stderr | default(None) or
+            ansible_failed_result.stdout | default(None) or
+            ansible_failed_result.msg | default('An unknown error occurred.')
+          }}
+
+    - name: "[ERROR] Identify the specific failure type"
+      ansible.builtin.set_fact:
+        registry_image_sync_failure_category: >-
+          {%- set msg = registry_image_sync_failure_message.lower() -%}
+          {%- if 'invalid username/password' in msg -%}
+            bad_credentials
+          {%- elif 'manifest unknown' in msg or 'not found' in msg -%}
+            source_image_not_found
+          {%- elif 'tls' in msg or 'certificate' in msg -%}
+            tls_handshake_failed
+          {%- else -%}
+            unclassified_error
+          {%- endif -%}
+
+    - name: "[ERROR] Fail the task"
+      ansible.builtin.fail:
+        msg: "The Skopeo image transfer role failed during execution."
+
+  always:
+    - name: "[INFO] Construct the Generic Role Output Object"
+      ansible.builtin.set_fact:
+        registry_image_sync_role_output:
+          role_name: "registry_image_sync"
+          failure_message: "{{ registry_image_sync_failure_message }}"
+          failure_category: "{{ registry_image_sync_failure_category }}"
+          files:
+            modified: "{{ registry_image_sync_tracked_files_modified }}"
+            deleted: "{{ registry_image_sync_tracked_files_deleted }}"
+            created: "{{ registry_image_sync_tracked_files_created }}"
+          variables: "{{ registry_image_sync_tracked_custom_facts }}"
+
+    - name: "[INFO] Print the generic output object"
+      ansible.builtin.debug:
+        msg: "{{ registry_image_sync_role_output }}"
