@@ -5,7 +5,8 @@ release_summary: >
 minor_changes:
   - Added the `fetch_files_sftp` role to retrieve files from remote SFTP servers using username/password authentication.
   - Added structured role output through `fetch_files_sftp_role_output`.
-  - Added deterministic failure categorization including `bad_credentials`, `source_file_not_found`, `host_unreachable`, `connection_failed`, and `invalid_input`.
+  - Added deterministic failure categorization including `bad_credentials`, `source_file_not_found`,
+    `host_unreachable`, `connection_failed`, and `invalid_input`.
   - Added structured transfer metadata including transfer status, source host, source path, and destination path.
   - Added configurable SSH connection timeout and retry controls.
   - Added support for optional SSH strict host key checking control.
