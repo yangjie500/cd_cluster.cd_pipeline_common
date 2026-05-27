@@ -1,0 +1,48 @@
+# meta/argument_specs.yml
+---
+argument_specs:
+  main:
+    short_description: Fetch files from a remote SFTP server
+    description:
+      - Connects to a remote SFTP server using username/password authentication.
+      - Transfers a remote file from the source path to a local destination path.
+      - Provides structured role output including failure categorization and transfer metadata.
+
+    options:
+      fetch_files_sftp_username:
+        type: str
+        required: true
+        description:
+          - Username used to authenticate against the remote SFTP server.
+
+      fetch_files_sftp_sftp_ip:
+        type: str
+        required: true
+        description:
+          - Hostname or IP address of the remote SFTP server.
+
+      fetch_files_sftp_sftp_password:
+        type: str
+        required: true
+        no_log: true
+        description:
+          - Password used to authenticate against the remote SFTP server.
+
+      fetch_files_sftp_file_path_src:
+        type: str
+        required: true
+        description:
+          - Remote source file path on the SFTP server.
+
+      fetch_files_sftp_file_path_dest:
+        type: str
+        required: true
+        description:
+          - Local destination path where the downloaded file will be stored.
+
+      fetch_files_sftp_strict_host_key_checking:
+        type: bool
+        required: false
+        default: false
+        description:
+          - Controls whether SSH strict host key checking is enforced during the SFTP transfer.

@@ -15,8 +15,6 @@ provisioner:
   inventory:
     group_vars:
       all:
-        sample_hello_file_path: /tmp/hello.txt
-        sample_hello_file_content: "Hello from Molecule test"
 
 platforms:
   - name: sftp-srv
