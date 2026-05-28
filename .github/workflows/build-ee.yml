@@ -14,9 +14,7 @@ permissions:
 env:
   EE_FILE: extensions/builder/execution-environment.yml
   EE_CONTEXT: context
-  COLLECTION_PATH: collections/ansible_collections/cd_cluster/pipeline_common
-  COLLECTION_TARBALL: dist/project-custom_collection.tar.gz
-  IMAGE_NAME: ghcr.io/${{ github.repository_owner }}/my-ee
+  IMAGE_NAME: ghcr.io/${{ github.repository_owner }}/cd-cluster-ee
 
 jobs:
   build-ee:
@@ -42,24 +40,29 @@ jobs:
 
           mv "$BUILT_COLLECTION" dist/project-custom-collection.tar.gz
 
+      - name: Extract collection version
+        run: |
+          COLLECTION_VERSION=$(yq -r '.version' "$COLLECTION_PATH/galaxy.yml")
+          echo "COLLECTION_VERSION=$COLLECTION_VERSION" >> $GITHUB_ENV
+          echo "Collection version: $COLLECTION_VERSION"
+
       - name: Login to GHCR
         run: |
           echo "${{ secrets.GITHUB_TOKEN }}" | docker login ghcr.io \
             -u "${{ github.actor }}" \
             --password-stdin
 
-      # - name: Build execution environment
-      #   run: |
-      #     BUILDKIT_PROGRESS=plain ansible-builder build -v 5 \
-      #       --file "$EE_FILE" \
-      #       --context "$EE_CONTEXT" \
-      #       --tag "$IMAGE_NAME:${{ github.sha }}" \
-      #       --tag "$IMAGE_NAME:hello-branch"
+      - name: Build execution environment
+        run: |
+          BUILDKIT_PROGRESS=plain ansible-builder build -v 5 \
+            --file "$EE_FILE" \
+            --tag "$IMAGE_NAME:${COLLECTION_VERSION}"
 
-      # - name: Test execution environment
-      #   run: |
-      #     docker run --rm "$IMAGE_NAME:${{ github.sha }}" ansible --version
-      #     docker run --rm "$IMAGE_NAME:${{ github.sha }}" ansible-galaxy collection list
+      - name: Test execution environment
+        run: |
+          docker run --rm "$IMAGE_NAME:${COLLECTION_VERSION}" ansible --version
+          docker run --rm "$IMAGE_NAME:${COLLECTION_VERSION}" ansible-galaxy collection list
+          docker run --rm "$IMAGE_NAME:${COLLECTION_VERSION}" python3.12 -m pip list
 
       # - name: Push execution environment
       #   if: github.ref == 'refs/heads/hello-branch'
