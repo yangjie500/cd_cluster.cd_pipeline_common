@@ -60,9 +60,9 @@ jobs:
 
       - name: Test execution environment
         run: |
-          docker run --rm "$IMAGE_NAME:${COLLECTION_VERSION}" ansible --version
-          docker run --rm "$IMAGE_NAME:${COLLECTION_VERSION}" ansible-galaxy collection list
-          docker run --rm "$IMAGE_NAME:${COLLECTION_VERSION}" python3.12 -m pip list
+          podman run --rm "$IMAGE_NAME:${COLLECTION_VERSION}" ansible --version
+          podman run --rm "$IMAGE_NAME:${COLLECTION_VERSION}" ansible-galaxy collection list
+          podman run --rm "$IMAGE_NAME:${COLLECTION_VERSION}" python3.12 -m pip list
 
       # - name: Push execution environment
       #   if: github.ref == 'refs/heads/hello-branch'
