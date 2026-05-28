@@ -3,7 +3,7 @@ name: Build Execution Environment
 on:
   push:
     branches:
-      - build-execution-environment
+      - feat/build-execution-environment
   pull_request:
   workflow_dispatch:
 
