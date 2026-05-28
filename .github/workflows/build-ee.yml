@@ -54,7 +54,7 @@ jobs:
 
       - name: Build execution environment
         run: |
-          BUILDKIT_PROGRESS=plain ansible-builder build -v 5 \
+          BUILDKIT_PROGRESS=plain ansible-builder build -v 3 \
             --file "$EE_FILE" \
             --tag "$IMAGE_NAME:${COLLECTION_VERSION}"
 
