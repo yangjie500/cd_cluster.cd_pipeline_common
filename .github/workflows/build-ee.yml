@@ -42,7 +42,7 @@ jobs:
 
       - name: Extract collection version
         run: |
-          COLLECTION_VERSION=$(yq -r '.version' "$COLLECTION_PATH/galaxy.yml")
+          COLLECTION_VERSION=$(yq -r '.version' "galaxy.yml")
           echo "COLLECTION_VERSION=$COLLECTION_VERSION" >> $GITHUB_ENV
           echo "Collection version: $COLLECTION_VERSION"
 
