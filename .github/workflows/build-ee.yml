@@ -35,12 +35,12 @@ jobs:
         run: |
           mkdir -p dist
 
-          ansible-galaxy collection build "$COLLECTION_PATH" \
+          ansible-galaxy collection build . \
             --output-path dist
 
           BUILT_COLLECTION="$(ls dist/*.tar.gz | head -n 1)"
 
-          cp "$BUILT_COLLECTION" dist/project-custom-collection.tar.gz
+          mv "$BUILT_COLLECTION" dist/project-custom-collection.tar.gz
 
       # - name: Login to GHCR
       #   run: |
