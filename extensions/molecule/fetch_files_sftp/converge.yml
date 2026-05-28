@@ -1,0 +1,171 @@
+---
+- name: Prepare SFTP server with test files
+  hosts: sftp-srv
+  gather_facts: false
+  tasks:
+    - name: Create upload directory
+      ansible.builtin.file:
+        path: /home/foo/upload
+        state: directory
+        owner: foo
+        mode: "0755"
+
+    - name: Create test file
+      ansible.builtin.copy:
+        content: "This is a test file for Molecule SFTP pull."
+        dest: /home/foo/upload/sftp-test-file.txt
+        owner: foo
+        mode: "0644"
+
+- name: Converge and verify fetch_files_sftp
+  hosts: instance
+  gather_facts: false
+  tasks:
+    - name: Install SFTP tools on Alpine
+      ansible.builtin.command: apk add --no-cache openssh-client sshpass
+      changed_when: true
+
+    - name: Get SFTP container details
+      delegate_to: localhost
+      community.docker.docker_container_info:
+        name: sftp-srv
+      register: sftp_info
+
+    - name: Set SFTP IP fact
+      ansible.builtin.set_fact:
+        sftp_ip: "{{ sftp_info.container.NetworkSettings.Networks.bridge.IPAddress }}"
+
+    - name: "TEST CASE 1: [SUCCESS SCENARIO] Fetch file from SFTP server"
+      block:
+        - name: Run fetch_files_sftp role
+          ansible.builtin.include_role:
+            name: fetch_files_sftp
+          vars:
+            fetch_files_sftp_username: "foo"
+            fetch_files_sftp_sftp_password: "pass"
+            fetch_files_sftp_sftp_ip: "{{ sftp_ip }}"
+            fetch_files_sftp_file_path_src: "/upload/sftp-test-file.txt"
+            fetch_files_sftp_file_path_dest: "/tmp/sftp-test-file.txt"
+
+        - name: Assert downloaded file exists
+          ansible.builtin.stat:
+            path: /tmp/sftp-test-file.txt
+          register: downloaded_file
+
+        - name: Assert successful role output
+          ansible.builtin.assert:
+            that:
+              - downloaded_file.stat.exists
+              - fetch_files_sftp_role_output.failure_message == ""
+              - fetch_files_sftp_role_output.failure_category == ""
+              - fetch_files_sftp_role_output.variables.transfer_status == "success"
+              - fetch_files_sftp_role_output.variables.source_host == sftp_ip
+              - fetch_files_sftp_role_output.variables.source_path == "/upload/sftp-test-file.txt"
+              - fetch_files_sftp_role_output.variables.destination_path == "/tmp/sftp-test-file.txt"
+              - "'/tmp/sftp-test-file.txt' in fetch_files_sftp_role_output.files.created"
+
+    - name: "TEST CASE 2: [FAILURE SCENARIO] Wrong password"
+      block:
+        - name: Run fetch_files_sftp role with wrong password
+          ansible.builtin.include_role:
+            name: fetch_files_sftp
+          vars:
+            fetch_files_sftp_username: "foo"
+            fetch_files_sftp_sftp_password: "wrong-password"
+            fetch_files_sftp_sftp_ip: "{{ sftp_ip }}"
+            fetch_files_sftp_file_path_src: "/upload/sftp-test-file.txt"
+            fetch_files_sftp_file_path_dest: "/tmp/sftp-wrong-password.txt"
+
+        - name: Fail because role should not succeed
+          ansible.builtin.fail:
+            msg: "fetch_files_sftp unexpectedly succeeded with wrong password"
+
+      rescue:
+        - name: Assert bad credentials category and failed transfer status
+          ansible.builtin.assert:
+            that:
+              - fetch_files_sftp_role_output.failure_category == "bad_credentials"
+              - fetch_files_sftp_role_output.variables.transfer_status == "failed"
+              - fetch_files_sftp_role_output.variables.source_host == sftp_ip
+              - fetch_files_sftp_role_output.variables.source_path == "/upload/sftp-test-file.txt"
+              - fetch_files_sftp_role_output.variables.destination_path == "/tmp/sftp-wrong-password.txt"
+
+    - name: "TEST CASE 3: [FAILURE SCENARIO] Source file not found"
+      block:
+        - name: Run fetch_files_sftp role with missing source file
+          ansible.builtin.include_role:
+            name: fetch_files_sftp
+          vars:
+            fetch_files_sftp_username: "foo"
+            fetch_files_sftp_sftp_password: "pass"
+            fetch_files_sftp_sftp_ip: "{{ sftp_ip }}"
+            fetch_files_sftp_file_path_src: "/upload/missing-file.txt"
+            fetch_files_sftp_file_path_dest: "/tmp/sftp-missing-file.txt"
+
+        - name: Fail because role should not succeed
+          ansible.builtin.fail:
+            msg: "fetch_files_sftp unexpectedly succeeded with missing source file"
+
+      rescue:
+        - name: Assert source file not found category and failed transfer status
+          ansible.builtin.assert:
+            that:
+              - fetch_files_sftp_role_output.failure_category == "source_file_not_found"
+              - fetch_files_sftp_role_output.variables.transfer_status == "failed"
+              - fetch_files_sftp_role_output.variables.source_host == sftp_ip
+              - fetch_files_sftp_role_output.variables.source_path == "/upload/missing-file.txt"
+              - fetch_files_sftp_role_output.variables.destination_path == "/tmp/sftp-missing-file.txt"
+
+    - name: "TEST CASE 4: [FAILURE SCENARIO] Invalid input"
+      block:
+        - name: Run fetch_files_sftp role with missing source path
+          ansible.builtin.include_role:
+            name: fetch_files_sftp
+          vars:
+            fetch_files_sftp_username: "foo"
+            fetch_files_sftp_sftp_password: "pass"
+            fetch_files_sftp_sftp_ip: "{{ sftp_ip }}"
+            fetch_files_sftp_file_path_src: ""
+            fetch_files_sftp_file_path_dest: "/tmp/sftp-invalid-input.txt"
+
+        - name: Fail because role should not succeed
+          ansible.builtin.fail:
+            msg: "fetch_files_sftp unexpectedly succeeded with invalid input"
+
+      rescue:
+        - name: Assert invalid input category and failed transfer status
+          ansible.builtin.assert:
+            that:
+              - fetch_files_sftp_role_output.failure_category == "invalid_input"
+              - fetch_files_sftp_role_output.variables.transfer_status == "failed"
+              - fetch_files_sftp_role_output.variables.source_host == sftp_ip
+              - fetch_files_sftp_role_output.variables.source_path == ""
+              - fetch_files_sftp_role_output.variables.destination_path == "/tmp/sftp-invalid-input.txt"
+
+    - name: "TEST CASE 5: [FAILURE SCENARIO] Host unreachable"
+      block:
+        - name: Run fetch_files_sftp role with unreachable host
+          ansible.builtin.include_role:
+            name: fetch_files_sftp
+          vars:
+            fetch_files_sftp_username: "foo"
+            fetch_files_sftp_sftp_password: "pass"
+            fetch_files_sftp_sftp_ip: "192.0.2.10"
+            fetch_files_sftp_file_path_src: "/upload/sftp-test-file.txt"
+            fetch_files_sftp_file_path_dest: "/tmp/sftp-unreachable.txt"
+            fetch_files_sftp_connect_timeout: 2
+            fetch_files_sftp_connection_attempts: 1
+
+        - name: Fail because role should not succeed
+          ansible.builtin.fail:
+            msg: "fetch_files_sftp unexpectedly succeeded with unreachable host"
+
+      rescue:
+        - name: Assert connection failure category and failed transfer status
+          ansible.builtin.assert:
+            that:
+              - fetch_files_sftp_role_output.failure_category in ["host_unreachable", "connection_failed"]
+              - fetch_files_sftp_role_output.variables.transfer_status == "failed"
+              - fetch_files_sftp_role_output.variables.source_host == "192.0.2.10"
+              - fetch_files_sftp_role_output.variables.source_path == "/upload/sftp-test-file.txt"
+              - fetch_files_sftp_role_output.variables.destination_path == "/tmp/sftp-unreachable.txt"

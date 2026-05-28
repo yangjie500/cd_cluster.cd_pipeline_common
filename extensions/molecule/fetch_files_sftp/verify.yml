@@ -1,0 +1,14 @@
+---
+- name: Verify SFTP Pull on Simulated SFTP Watcher
+  hosts: instance
+  gather_facts: false
+  tasks:
+    - name: Check if the file exists on the runner
+      ansible.builtin.stat:
+        path: "/tmp/sftp-test-file.txt"
+      register: sftp_file
+
+    - name: Assert file is present
+      ansible.builtin.assert:
+        that:
+          - sftp_file.stat.exists

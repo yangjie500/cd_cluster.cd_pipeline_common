@@ -1,0 +1,134 @@
+---
+- name: "[INFO] Role Configuration: fetch_files_sftp"
+  ansible.builtin.debug:
+    msg:
+      - "--- SFTP CONFIGURATION ---"
+      - "Username: {{ fetch_files_sftp_username | default('UNDEFINED', true) }}"
+      - "Target IP: {{ fetch_files_sftp_sftp_ip | default('UNDEFINED', true) }}"
+      - "Source Path: {{ fetch_files_sftp_file_path_src | default('UNDEFINED', true) }}"
+      - "Dest Path: {{ fetch_files_sftp_file_path_dest | default('UNDEFINED', true) }}"
+      - "Password: [MASKED]"
+
+- name: "[INFO] Sanitize input variables"
+  ansible.builtin.set_fact:
+    fetch_files_sftp_username: "{{ fetch_files_sftp_username | default('', true) | trim }}"
+    fetch_files_sftp_sftp_ip: "{{ fetch_files_sftp_sftp_ip | default('', true) | trim }}"
+    fetch_files_sftp_sftp_password: "{{ fetch_files_sftp_sftp_password | default('', true) | trim }}"
+    fetch_files_sftp_file_path_src: "{{ fetch_files_sftp_file_path_src | default('', true) | trim }}"
+    fetch_files_sftp_file_path_dest: "{{ fetch_files_sftp_file_path_dest | default('', true) | trim }}"
+    fetch_files_sftp_strict_host_key_checking: >-
+      {{ fetch_files_sftp_strict_host_key_checking | default(false) | bool }}
+
+- name: "[INFO] Initialize role tracking variables"
+  ansible.builtin.set_fact:
+    fetch_files_sftp_tracked_files_modified: []
+    fetch_files_sftp_tracked_files_deleted: []
+    fetch_files_sftp_tracked_files_created: []
+    fetch_files_sftp_tracked_custom_facts: {}
+    fetch_files_sftp_failure_message: ""
+    fetch_files_sftp_failure_category: ""
+    fetch_files_sftp_transfer_status: "pending"
+
+- name: Manage SFTP File Transfer
+  block:
+    - name: Validate required SFTP inputs
+      ansible.builtin.assert:
+        that:
+          - fetch_files_sftp_username | length > 0
+          - fetch_files_sftp_sftp_ip | length > 0
+          - fetch_files_sftp_sftp_password | length > 0
+          - fetch_files_sftp_file_path_src | length > 0
+          - fetch_files_sftp_file_path_dest | length > 0
+        fail_msg: "Required SFTP input variables are missing or empty."
+
+    - name: "[INFO] Pull file from SFTP server"
+      ansible.builtin.command: >
+        sshpass -p {{ fetch_files_sftp_sftp_password }}
+        sftp
+        {% if not fetch_files_sftp_strict_host_key_checking %}
+        -o StrictHostKeyChecking=no
+        {% endif %}
+        -o ConnectTimeout={{ fetch_files_sftp_connect_timeout }}
+        -o ConnectionAttempts={{ fetch_files_sftp_connection_attempts }}
+        -o NumberOfPasswordPrompts=1
+        -o BatchMode=no
+        {{ fetch_files_sftp_username }}@{{ fetch_files_sftp_sftp_ip }}:{{ fetch_files_sftp_file_path_src }}
+        {{ fetch_files_sftp_file_path_dest }}
+      register: fetch_files_sftp_result
+      changed_when: fetch_files_sftp_result.rc == 0
+      no_log: true
+
+    - name: "[INFO] Update tracked files after successful transfer"
+      ansible.builtin.set_fact:
+        fetch_files_sftp_tracked_files_created:
+          - "{{ fetch_files_sftp_file_path_dest }}"
+        fetch_files_sftp_transfer_status: "success"
+
+    - name: "[INFO] Update custom facts with transfer output"
+      ansible.builtin.set_fact:
+        fetch_files_sftp_tracked_custom_facts:
+          transfer_status: "success"
+          source_host: "{{ fetch_files_sftp_sftp_ip }}"
+          source_path: "{{ fetch_files_sftp_file_path_src }}"
+          destination_path: "{{ fetch_files_sftp_file_path_dest }}"
+
+  rescue:
+    - name: "[ERROR] Record the exact task failure"
+      ansible.builtin.set_fact:
+        fetch_files_sftp_failure_message: >-
+          {{
+            ansible_failed_result.stderr | default(None) or
+            ansible_failed_result.stdout | default(None) or
+            ansible_failed_result.msg | default('An unknown error occurred.')
+          }}
+
+    - name: "[ERROR] Identify the specific failure type"
+      ansible.builtin.set_fact:
+        fetch_files_sftp_failure_category: >-
+          {%- set msg = fetch_files_sftp_failure_message.lower() -%}
+          {%- if 'permission denied' in msg or 'authentication failed' in msg -%}
+            bad_credentials
+          {%- elif 'no such file' in msg or 'not found' in msg -%}
+            source_file_not_found
+          {%- elif 'name or service not known' in msg or 'could not resolve' in msg -%}
+            host_unreachable
+          {%- elif 'connection refused' in msg
+                or 'connection timed out' in msg
+                or 'operation timed out' in msg
+                or 'connection timeout' in msg -%}
+            connection_failed
+          {%- elif 'required sftp input variables' in msg -%}
+            invalid_input
+          {%- else -%}
+            unclassified_error
+          {%- endif -%}
+
+    - name: "[ERROR] Update custom facts with failure output"
+      ansible.builtin.set_fact:
+        fetch_files_sftp_transfer_status: "failed"
+        fetch_files_sftp_tracked_custom_facts:
+          transfer_status: "failed"
+          source_host: "{{ fetch_files_sftp_sftp_ip }}"
+          source_path: "{{ fetch_files_sftp_file_path_src }}"
+          destination_path: "{{ fetch_files_sftp_file_path_dest }}"
+
+    - name: "[ERROR] Fail the task"
+      ansible.builtin.fail:
+        msg: "The SFTP file transfer role failed during execution."
+
+  always:
+    - name: "[INFO] Construct the Generic Role Output Object"
+      ansible.builtin.set_fact:
+        fetch_files_sftp_role_output:
+          role_name: "fetch_files_sftp"
+          failure_message: "{{ fetch_files_sftp_failure_message }}"
+          failure_category: "{{ fetch_files_sftp_failure_category }}"
+          files:
+            modified: "{{ fetch_files_sftp_tracked_files_modified }}"
+            deleted: "{{ fetch_files_sftp_tracked_files_deleted }}"
+            created: "{{ fetch_files_sftp_tracked_files_created }}"
+          variables: "{{ fetch_files_sftp_tracked_custom_facts }}"
+
+    - name: "[INFO] Print the generic output object"
+      ansible.builtin.debug:
+        msg: "{{ fetch_files_sftp_role_output }}"
