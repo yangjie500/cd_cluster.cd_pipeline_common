@@ -13,8 +13,7 @@ permissions:
 
 env:
   EE_FILE: extensions/builder/execution-environment.yml
-  EE_CONTEXT: context
-  IMAGE_NAME: ghcr.io/${{ github.repository_owner }}/cd-cluster-ee
+  IMAGE_NAME: ghcr.io/${{ github.repository_owner }}/${{ github.event.repository.name }}
 
 jobs:
   build-ee:
