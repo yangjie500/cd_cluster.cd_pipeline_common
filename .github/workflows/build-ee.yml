@@ -1,0 +1,68 @@
+name: Build Execution Environment
+
+on:
+  push:
+    branches:
+      - build-execution-environment
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  packages: write
+
+env:
+  EE_FILE: extensions/builder/execution-environment.yml
+  EE_CONTEXT: context
+  COLLECTION_PATH: collections/ansible_collections/cd_cluster/pipeline_common
+  COLLECTION_TARBALL: dist/project-custom_collection.tar.gz
+  IMAGE_NAME: ghcr.io/${{ github.repository_owner }}/my-ee
+
+jobs:
+  build-ee:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repo
+        uses: actions/checkout@v4
+
+      - name: Install Ansible build tools
+        run: |
+          python -m pip install --upgrade pip
+          pip install ansible-core ansible-builder ansible-runner
+
+      - name: Build custom collection artifact
+        run: |
+          mkdir -p dist
+
+          ansible-galaxy collection build "$COLLECTION_PATH" \
+            --output-path dist
+
+          BUILT_COLLECTION="$(ls dist/*.tar.gz | head -n 1)"
+
+          cp "$BUILT_COLLECTION" dist/project-custom-collection.tar.gz
+
+      # - name: Login to GHCR
+      #   run: |
+      #     echo "${{ secrets.GITHUB_TOKEN }}" | docker login ghcr.io \
+      #       -u "${{ github.actor }}" \
+      #       --password-stdin
+
+      # - name: Build execution environment
+      #   run: |
+      #     BUILDKIT_PROGRESS=plain ansible-builder build -v 5 \
+      #       --file "$EE_FILE" \
+      #       --context "$EE_CONTEXT" \
+      #       --tag "$IMAGE_NAME:${{ github.sha }}" \
+      #       --tag "$IMAGE_NAME:hello-branch"
+
+      # - name: Test execution environment
+      #   run: |
+      #     docker run --rm "$IMAGE_NAME:${{ github.sha }}" ansible --version
+      #     docker run --rm "$IMAGE_NAME:${{ github.sha }}" ansible-galaxy collection list
+
+      # - name: Push execution environment
+      #   if: github.ref == 'refs/heads/hello-branch'
+      #   run: |
+      #     docker push "$IMAGE_NAME:${{ github.sha }}"
+      #     docker push "$IMAGE_NAME:hello-branch"

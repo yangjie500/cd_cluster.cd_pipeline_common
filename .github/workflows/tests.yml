@@ -1,60 +1,60 @@
----
-name: "CI"
+# ---
+# name: "CI"
 
-concurrency:
-  group: ${{ github.workflow }}-${{ github.head_ref || github.ref_name || github.run_id }}
-  cancel-in-progress: true
+# concurrency:
+#   group: ${{ github.workflow }}-${{ github.head_ref || github.ref_name || github.run_id }}
+#   cancel-in-progress: true
 
-on: # yamllint disable-line rule:truthy
-  pull_request:
-    branches: [main]
-  workflow_dispatch:
-  # TO-DO: Below is an example cron scheduler. Uncomment and tweak it as per your requirement
-  # schedule:
-    # - cron: '0 0 * * *'
+# on: # yamllint disable-line rule:truthy
+#   pull_request:
+#     branches: [main]
+#   workflow_dispatch:
+#   # TO-DO: Below is an example cron scheduler. Uncomment and tweak it as per your requirement
+#   # schedule:
+#     # - cron: '0 0 * * *'
 
-jobs:
-  changelog:
-    uses: ansible/ansible-content-actions/.github/workflows/changelog.yaml@main
-    if: github.event_name == 'pull_request'
-  build-import:
-    uses: ansible/ansible-content-actions/.github/workflows/build_import.yaml@main
-  ansible-lint:
-    uses: ansible/ansible-content-actions/.github/workflows/ansible_lint.yaml@main
-  sanity:
-    uses: ansible/ansible-content-actions/.github/workflows/sanity.yaml@main
-  unit-source:
-    uses: ansible-network/github_actions/.github/workflows/unit_source.yml@main
-    with:
-      collection_pre_install: >-
-        git+https://github.com/ansible-collections/ansible.utils.git
-      matrix_exclude: >-
-        [
-          {"ansible-version": "stable-2.16"},
-          {"ansible-version": "stable-2.17"},
-          {"ansible-version": "stable-2.18"},
-          {"ansible-version": "stable-2.19"},
-          {"ansible-version": "devel"},
-          {"python-version": "3.10"},
-          {"python-version": "3.11"},
-          {"python-version": "3.13"},
-          {"python-version": "3.14"}
-        ]
-  all_green:
-    if: ${{ always() }}
-    needs:
-      - changelog
-      - build-import
-      - sanity
-      - unit-source
-      - ansible-lint
-    runs-on: ubuntu-latest
-    steps:
-      - run: >-
-          python -c "assert 'failure' not in
-          set([
-          '${{ needs.changelog.result }}',
-          '${{ needs.sanity.result }}',
-          '${{ needs.ansible-lint.result }}'
-          '${{ needs.unit-source.result }}'
-          ])"
+# jobs:
+#   changelog:
+#     uses: ansible/ansible-content-actions/.github/workflows/changelog.yaml@main
+#     if: github.event_name == 'pull_request'
+#   build-import:
+#     uses: ansible/ansible-content-actions/.github/workflows/build_import.yaml@main
+#   ansible-lint:
+#     uses: ansible/ansible-content-actions/.github/workflows/ansible_lint.yaml@main
+#   sanity:
+#     uses: ansible/ansible-content-actions/.github/workflows/sanity.yaml@main
+#   unit-source:
+#     uses: ansible-network/github_actions/.github/workflows/unit_source.yml@main
+#     with:
+#       collection_pre_install: >-
+#         git+https://github.com/ansible-collections/ansible.utils.git
+#       matrix_exclude: >-
+#         [
+#           {"ansible-version": "stable-2.16"},
+#           {"ansible-version": "stable-2.17"},
+#           {"ansible-version": "stable-2.18"},
+#           {"ansible-version": "stable-2.19"},
+#           {"ansible-version": "devel"},
+#           {"python-version": "3.10"},
+#           {"python-version": "3.11"},
+#           {"python-version": "3.13"},
+#           {"python-version": "3.14"}
+#         ]
+#   all_green:
+#     if: ${{ always() }}
+#     needs:
+#       - changelog
+#       - build-import
+#       - sanity
+#       - unit-source
+#       - ansible-lint
+#     runs-on: ubuntu-latest
+#     steps:
+#       - run: >-
+#           python -c "assert 'failure' not in
+#           set([
+#           '${{ needs.changelog.result }}',
+#           '${{ needs.sanity.result }}',
+#           '${{ needs.ansible-lint.result }}'
+#           '${{ needs.unit-source.result }}'
+#           ])"

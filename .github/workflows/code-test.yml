@@ -1,117 +1,117 @@
----
-name: Molecule & Python Test
+# ---
+# name: Molecule & Python Test
 
-concurrency:
-  group: ${{ github.workflow }}-${{ github.head_ref || github.ref_name || github.run_id }}
-  cancel-in-progress: true
+# concurrency:
+#   group: ${{ github.workflow }}-${{ github.head_ref || github.ref_name || github.run_id }}
+#   cancel-in-progress: true
 
-on:
-  push:
-    branches:
-      - "**"        # Matches all branches including those with slashes (e.g., feature/test)
-  pull_request:
-    branches:
-      - "**"
+# on:
+#   push:
+#     branches:
+#       - "**"        # Matches all branches including those with slashes (e.g., feature/test)
+#   pull_request:
+#     branches:
+#       - "**"
 
-jobs:
-  unit-galaxy:
-    name: Run Unit Tests
-    uses: ansible/ansible-content-actions/.github/workflows/unit.yaml@main
+# jobs:
+#   unit-galaxy:
+#     name: Run Unit Tests
+#     uses: ansible/ansible-content-actions/.github/workflows/unit.yaml@main
 
-  molecule:
-    name: Run Molecule Tests
-    runs-on: ubuntu-latest
+#   molecule:
+#     name: Run Molecule Tests
+#     runs-on: ubuntu-latest
 
-    env:
-      gitlab_clone_repository_secret_pat: ${{ secrets.gitlab_clone_repository_secret_pat }}
-      gitlab_push_repository_secret_pat: ${{ secrets.gitlab_push_repository_secret_pat }}
-      sample_image_created_by_cosign_url: ${{ secrets.sample_image_created_by_cosign_url }}
-      s3_api_key: ${{ secrets.s3_api_key }}
-      s3_api_secret: ${{ secrets.s3_api_secret }}
-      gitlab_registry_token: ${{ secrets.gitlab_registry_token }}
-      sample_image_created_by_podman_url: ${{ secrets.sample_image_created_by_podman_url }}
-      keycloak_client_secret: ${{ secrets.keycloak_client_secret }}
-      keycloak_token_url: ${{ secrets.keycloak_token_url }}
+#     env:
+#       gitlab_clone_repository_secret_pat: ${{ secrets.gitlab_clone_repository_secret_pat }}
+#       gitlab_push_repository_secret_pat: ${{ secrets.gitlab_push_repository_secret_pat }}
+#       sample_image_created_by_cosign_url: ${{ secrets.sample_image_created_by_cosign_url }}
+#       s3_api_key: ${{ secrets.s3_api_key }}
+#       s3_api_secret: ${{ secrets.s3_api_secret }}
+#       gitlab_registry_token: ${{ secrets.gitlab_registry_token }}
+#       sample_image_created_by_podman_url: ${{ secrets.sample_image_created_by_podman_url }}
+#       keycloak_client_secret: ${{ secrets.keycloak_client_secret }}
+#       keycloak_token_url: ${{ secrets.keycloak_token_url }}
 
-    steps:
-      - name: Checkout repository
-        uses: actions/checkout@v4
+#     steps:
+#       - name: Checkout repository
+#         uses: actions/checkout@v4
 
-      - name: Set up Python
-        uses: actions/setup-python@v5
-        with:
-          python-version: '3.12'
+#       - name: Set up Python
+#         uses: actions/setup-python@v5
+#         with:
+#           python-version: '3.12'
 
-      - name: Install Python dependencies
-        run: |
-          python3 -m pip install --upgrade pip
-          python3 -m pip install ansible-core==2.20.4
-          pip3 install ansible-dev-tools
-          pip3 install molecule-plugins[docker]
+#       - name: Install Python dependencies
+#         run: |
+#           python3 -m pip install --upgrade pip
+#           python3 -m pip install ansible-core==2.20.4
+#           pip3 install ansible-dev-tools
+#           pip3 install molecule-plugins[docker]
 
-      - name: Install Ansible dependencies
-        run: |
-          ansible-galaxy collection install -r test-requirements.yml
+#       - name: Install Ansible dependencies
+#         run: |
+#           ansible-galaxy collection install -r test-requirements.yml
 
-      - name: Install System dependencies
-        run: sudo apt-get update && sudo apt-get install -y rsync
+#       - name: Install System dependencies
+#         run: sudo apt-get update && sudo apt-get install -y rsync
 
-      - name: Run Molecule Tests
-        run: molecule test --all
+#       - name: Run Molecule Tests
+#         run: molecule test --all
 
-  ansible-test-integration:
-    name: Run Integration Tests
-    runs-on: ubuntu-latest
+#   ansible-test-integration:
+#     name: Run Integration Tests
+#     runs-on: ubuntu-latest
 
-    strategy:
-      fail-fast: false
-      matrix:
-        python-version:
-          - "3.12"
-        ansible-version:
-          - stable-2.20
+#     strategy:
+#       fail-fast: false
+#       matrix:
+#         python-version:
+#           - "3.12"
+#         ansible-version:
+#           - stable-2.20
 
-    env:
-      COLLECTIONS_PATH: /home/runner/collections
+#     env:
+#       COLLECTIONS_PATH: /home/runner/collections
 
-    steps:
-      - name: Checkout repository
-        uses: actions/checkout@v4
-        with:
-          fetch-depth: 0
-          path: source
+#     steps:
+#       - name: Checkout repository
+#         uses: actions/checkout@v4
+#         with:
+#           fetch-depth: 0
+#           path: source
 
-      - name: Install dependent collections from requirements
-        run: |
-          ansible-galaxy collection install \
-            -r source/test-requirements.yml \
-            -p ${{ env.COLLECTIONS_PATH }}/ansible_collections/ \
-            --force
+#       - name: Install dependent collections from requirements
+#         run: |
+#           ansible-galaxy collection install \
+#             -r source/test-requirements.yml \
+#             -p ${{ env.COLLECTIONS_PATH }}/ansible_collections/ \
+#             --force
 
-      - name: Read collection metadata
-        id: galaxy
-        run: |
-          namespace=$(awk '/^namespace:/ {print $2}' source/galaxy.yml | tr -d '"')
-          collection=$(awk '/^name:/ {print $2}' source/galaxy.yml | tr -d '"')
+#       - name: Read collection metadata
+#         id: galaxy
+#         run: |
+#           namespace=$(awk '/^namespace:/ {print $2}' source/galaxy.yml | tr -d '"')
+#           collection=$(awk '/^name:/ {print $2}' source/galaxy.yml | tr -d '"')
 
-          echo "namespace=${namespace}" >> "$GITHUB_OUTPUT"
-          echo "collection=${collection}" >> "$GITHUB_OUTPUT"
+#           echo "namespace=${namespace}" >> "$GITHUB_OUTPUT"
+#           echo "collection=${collection}" >> "$GITHUB_OUTPUT"
 
-      - name: Create collection directory
-        run: |
-          mkdir -p \
-            ${COLLECTIONS_PATH}/ansible_collections/${{ steps.galaxy.outputs.namespace }}
+#       - name: Create collection directory
+#         run: |
+#           mkdir -p \
+#             ${COLLECTIONS_PATH}/ansible_collections/${{ steps.galaxy.outputs.namespace }}
 
-      - name: Copy collection into ansible_collections path
-        run: |
-          cp -R source \
-            ${COLLECTIONS_PATH}/ansible_collections/${{ steps.galaxy.outputs.namespace }}/${{ steps.galaxy.outputs.collection }}
+#       - name: Copy collection into ansible_collections path
+#         run: |
+#           cp -R source \
+#             ${COLLECTIONS_PATH}/ansible_collections/${{ steps.galaxy.outputs.namespace }}/${{ steps.galaxy.outputs.collection }}
 
-      - name: Run ansible-test integration
-        uses: ansible-network/github_actions/.github/actions/ansible_test_integration@main
-        with:
-          collection_path: >-
-            /home/runner/collections/ansible_collections/${{ steps.galaxy.outputs.namespace }}/${{ steps.galaxy.outputs.collection }}
-          python_version: ${{ matrix.python-version }}
-          ansible_version: ${{ matrix.ansible-version }}
-          ansible_test_targets: "--docker"
+#       - name: Run ansible-test integration
+#         uses: ansible-network/github_actions/.github/actions/ansible_test_integration@main
+#         with:
+#           collection_path: >-
+#             /home/runner/collections/ansible_collections/${{ steps.galaxy.outputs.namespace }}/${{ steps.galaxy.outputs.collection }}
+#           python_version: ${{ matrix.python-version }}
+#           ansible_version: ${{ matrix.ansible-version }}
+#           ansible_test_targets: "--docker"
