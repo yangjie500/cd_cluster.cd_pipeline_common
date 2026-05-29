@@ -1,14 +1,12 @@
-name: Build Execution Environment
+name: Release-Pipeline
 
 on:
   push:
-    branches:
-      - feat/build-execution-environment
-  pull_request:
-  workflow_dispatch:
+    tags:
+      - "v*"
 
 permissions:
-  contents: read
+  contents: write
   packages: write
 
 env:
@@ -22,6 +20,21 @@ jobs:
     steps:
       - name: Checkout repo
         uses: actions/checkout@v4
+
+      - name: Extract and validate collection version
+        run: |
+          COLLECTION_VERSION=$(yq -r '.version' galaxy.yml)
+          TAG_VERSION="${GITHUB_REF_NAME#v}"
+
+          echo "COLLECTION_VERSION=$COLLECTION_VERSION" >> $GITHUB_ENV
+
+          echo "Collection version: $COLLECTION_VERSION"
+          echo "Git tag version: $TAG_VERSION"
+
+          if [ "$COLLECTION_VERSION" != "$TAG_VERSION" ]; then
+            echo "ERROR: Git tag version does not match galaxy.yml version"
+            exit 1
+          fi
 
       - name: Install Ansible build tools
         run: |
@@ -39,15 +52,9 @@ jobs:
 
           mv "$BUILT_COLLECTION" dist/project-custom-collection.tar.gz
 
-      - name: Extract collection version
-        run: |
-          COLLECTION_VERSION=$(yq -r '.version' "galaxy.yml")
-          echo "COLLECTION_VERSION=$COLLECTION_VERSION" >> $GITHUB_ENV
-          echo "Collection version: $COLLECTION_VERSION"
-
       - name: Login to GHCR
         run: |
-          echo "${{ secrets.GITHUB_TOKEN }}" | docker login ghcr.io \
+          echo "${{ secrets.GITHUB_TOKEN }}" | podman login ghcr.io \
             -u "${{ github.actor }}" \
             --password-stdin
 
@@ -66,3 +73,9 @@ jobs:
       - name: Push execution environment
         run: |
           podman push "$IMAGE_NAME:${COLLECTION_VERSION}"
+
+      - name: Create GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          files: dist/project-custom-collection.tar.gz
+          generate_release_notes: true
