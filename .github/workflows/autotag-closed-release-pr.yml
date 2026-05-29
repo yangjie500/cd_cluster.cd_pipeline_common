@@ -24,7 +24,7 @@ jobs:
       - name: Checkout merged main
         uses: actions/checkout@v4
         with:
-          ref: main
+          ref: ${{ github.event.pull_request.base.ref }}
           fetch-depth: 0
 
       - name: Extract collection version
