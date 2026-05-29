@@ -1,0 +1,99 @@
+name: Release-CD
+
+on:
+  pull_request:
+    types:
+      - closed
+
+permissions:
+  contents: write
+  packages: write
+
+env:
+  EE_FILE: extensions/builder/execution-environment.yml
+  IMAGE_NAME: ghcr.io/${{ github.repository_owner }}/${{ github.event.repository.name }}
+
+jobs:
+  build-ee:
+    if: >
+      github.event.pull_request.merged == true &&
+      contains(github.event.pull_request.labels.*.name, 'release') &&
+      (
+        github.event.pull_request.base.ref == 'main' ||
+        github.event.pull_request.base.ref == 'feat/add-release-ci'
+      )
+
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repo
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.pull_request.base.ref }}
+          fetch-depth: 0
+
+      - name: Extract and validate collection version
+        run: |
+          COLLECTION_VERSION=$(yq -r '.version' galaxy.yml)
+          echo "COLLECTION_VERSION=$COLLECTION_VERSION" >> $GITHUB_ENV
+          echo "Collection version: $COLLECTION_VERSION"
+
+      - name: Create git tag based on galaxy version
+        run: |
+          git fetch --tags
+
+          if git rev-parse "v${COLLECTION_VERSION}" >/dev/null 2>&1; then
+            echo "ERROR: Tag v${COLLECTION_VERSION} already exists"
+            exit 1
+          fi
+
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+
+          git tag "v${COLLECTION_VERSION}"
+          git push origin "v${COLLECTION_VERSION}"
+
+      - name: Install Ansible build tools
+        run: |
+          python -m pip install --upgrade pip
+          pip install ansible-core ansible-builder ansible-runner
+
+      - name: Build custom collection artifact
+        run: |
+          mkdir -p dist
+
+          ansible-galaxy collection build . \
+            --output-path dist
+
+          BUILT_COLLECTION="$(ls dist/*.tar.gz | head -n 1)"
+
+          mv "$BUILT_COLLECTION" dist/project-custom-collection.tar.gz
+
+      - name: Login to GHCR
+        run: |
+          echo "${{ secrets.GITHUB_TOKEN }}" | podman login ghcr.io \
+            -u "${{ github.actor }}" \
+            --password-stdin
+
+      - name: Build execution environment
+        run: |
+          BUILDKIT_PROGRESS=plain ansible-builder build -v 3 \
+            --file "$EE_FILE" \
+            --tag "$IMAGE_NAME:${COLLECTION_VERSION}"
+
+      - name: Test execution environment
+        run: |
+          podman run --rm "$IMAGE_NAME:${COLLECTION_VERSION}" ansible --version
+          podman run --rm "$IMAGE_NAME:${COLLECTION_VERSION}" ansible-galaxy collection list
+          podman run --rm "$IMAGE_NAME:${COLLECTION_VERSION}" /usr/bin/python3.12 -m pip list
+
+      - name: Push execution environment
+        run: |
+          podman push "$IMAGE_NAME:${COLLECTION_VERSION}"
+
+      - name: Create GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: v${{ env.COLLECTION_VERSION }}
+          files: dist/project-custom-collection.tar.gz
+          generate_release_notes: true
