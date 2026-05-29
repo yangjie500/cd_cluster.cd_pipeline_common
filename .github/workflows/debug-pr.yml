@@ -1,0 +1,17 @@
+name: Debug Closed PR
+
+on:
+  pull_request:
+    types:
+      - closed
+
+jobs:
+  debug:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Show PR close event
+        run: |
+          echo "merged: ${{ github.event.pull_request.merged }}"
+          echo "base: ${{ github.event.pull_request.base.ref }}"
+          echo "labels: ${{ toJson(github.event.pull_request.labels.*.name) }}"
