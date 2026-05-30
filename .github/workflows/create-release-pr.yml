@@ -36,6 +36,15 @@ jobs:
         run: |
           yq -i '.version = "${{ inputs.version }}"' galaxy.yml
 
+      - name: Create release summary placeholder
+        run: |
+          mkdir -p changelogs/fragments
+
+          cat > changelogs/fragments/release-summary.yml <<'EOF'
+          release_summary: |
+            TODO: Write a short human-friendly summary of this release.
+          EOF
+
       - name: Create release PR
         uses: peter-evans/create-pull-request@v7
         with:
