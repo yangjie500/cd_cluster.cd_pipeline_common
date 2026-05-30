@@ -1,3 +1,3 @@
 ---
 minor_changes:
-  - added roles to push container images to remote registry using skopeo binary (Must be OCI Compliant)
+  - Added the `push_image_to_registry_generic` role to push OCI-compliant container images to remote registries using Skopeo.

@@ -1,10 +1,4 @@
 ---
 minor_changes:
-  - Added the `check_archive_contents` module to validate whether required files exist inside tar archives.
-  - Added support for `.tar`, `.tar.gz`, and `.tar.bz2` archive inspection using Python `tarfile`.
-  - Added basename matching support to detect files nested within archive directory structures.
-  - Added structured validation results including `matched` and `found_files`.
-
-doc_changes:
-  - Documented `check_archive_contents` module options, examples, and return values.
-  - Added integration and unit test coverage documentation for archive validation scenarios.
+  - Added the `check_archive_contents` module to validate required files within `.tar`, `.tar.gz`, and `.tar.bz2` archives,
+    including support for nested path basename matching and structured validation results.

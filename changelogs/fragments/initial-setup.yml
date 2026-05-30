@@ -1,7 +1,5 @@
 ---
 minor_changes:
-  - Initial project structure setup, including automated documentation generation for Ansible roles.
-  - Configured CI/CD pipeline to target Ansible 2.20 and Python 3.12.
-  - Added unit test skeleton and requirements configuration for CI validation.
-  - Updated Pre-commit and VS Code settings for improved development workflow.
-  - Refactored Molecule scenarios and cleaned up default skeleton plugins.
+  - Added the initial collection project structure, including automated documentation generation, Molecule scenario setup,
+    and CI/CD configuration targeting Ansible 2.20 and Python 3.12.
+  - Added baseline development tooling and validation support, including unit test scaffolding, pre-commit configuration, and VS Code workspace settings.

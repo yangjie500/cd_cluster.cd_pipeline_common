@@ -1,13 +1,4 @@
 ---
 minor_changes:
-  - Added the `registry_image_sync` role for remote registry-to-registry OCI image synchronization.
-  - Added support for synchronizing OCI image signature artifacts alongside container images.
-  - Added source and destination registry authentication support.
-  - Added configurable TLS verification support for both source and destination registries.
-  - Added structured failure categorization for operational troubleshooting.
-  - Added failure categories including `bad_credentials` and `source_image_not_found`.
-  - Added support for synchronizing unsigned images without failing the workflow.
-  - Added integration test coverage using real remote registry synchronization workflows.
-
-doc_changes:
-  - Documented `registry_image_sync` role
+  - Added the `registry_image_sync` role to support registry-to-registry OCI image synchronization,
+    including registry authentication, configurable TLS verification, unsigned image handling.

@@ -1,7 +1,7 @@
+---
 minor_changes:
-  - Added the `register_emitter` module to register reusable emitter configuration.
-  - Added the `signal_emit` module to emit signals through registered emitters.
-  - Added the `oauth_token` module to retrieve access tokens using OAuth server-side flows.
+  - Added the `register_emitter` and `signal_emit` modules to support reusable emitter registration and structured signal emission workflows.
+  - Added the `oauth_token` module to retrieve access tokens using OAuth server-side authentication flows.
 
 doc_changes:
-  - Documented runtime dependency requirements for `requests` and `tenacity`.
+  - Documented runtime dependency requirements for the `requests` and `tenacity` Python libraries.
