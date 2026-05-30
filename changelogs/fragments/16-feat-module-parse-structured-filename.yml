@@ -1,8 +1,4 @@
 ---
 minor_changes:
-  - Added the `parse_structured_filename` module to extract structured key-value metadata from delimited filename strings.
-  - Added support for stripping common single-part and multi-part file extensions before parsing structured filenames.
-  - Added strict field-to-key validation to fail when extracted filename fields do not match the provided key list.
-
-doc_changes:
-  - Documented `parse_structured_filename` module options, examples, and return values.
+  - Added the `parse_structured_filename` module to extract structured key-value metadata from delimited filenames,
+    including support for stripping common file extensions and validating extracted fields against expected key mappings.

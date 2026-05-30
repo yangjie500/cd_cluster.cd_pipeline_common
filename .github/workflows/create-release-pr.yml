@@ -1,0 +1,66 @@
+# .github/workflows/create-release-pr.yml
+name: Create Release PR
+
+on:
+  workflow_dispatch:
+    inputs:
+      version:
+        description: "Release version, e.g. 1.2.0"
+        required: true
+
+permissions:
+  contents: write
+  pull-requests: write
+
+jobs:
+  create-release-pr:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout main
+        uses: actions/checkout@v4
+        with:
+          ref: main
+          fetch-depth: 0
+
+      - name: Install tools
+        run: |
+          python -m pip install --upgrade pip
+          pip install antsibull-changelog
+
+      - name: Generate changelog
+        run: |
+          antsibull-changelog release --version "${{ inputs.version }}"
+
+      - name: Update galaxy.yml version
+        run: |
+          yq -i '.version = "${{ inputs.version }}"' galaxy.yml
+
+      - name: Create release summary placeholder
+        run: |
+          mkdir -p changelogs/fragments
+
+          cat > changelogs/fragments/release-summary.yml <<'EOF'
+          release_summary: |
+            TODO: Write a short human-friendly summary of this release.
+          EOF
+
+      - name: Create release PR
+        uses: peter-evans/create-pull-request@v7
+        with:
+          branch: release/${{ inputs.version }}
+          base: main
+          title: "Release v${{ inputs.version }}"
+          commit-message: "chore: prepare release v${{ inputs.version }}"
+          body: |
+            Prepare release v${{ inputs.version }}.
+
+            This PR:
+            - updates galaxy.yml version
+            - consumes changelog fragments
+            - updates generated changelog
+
+            Merge this PR to trigger Release-CD.
+          labels: |
+            release
+          delete-branch: false

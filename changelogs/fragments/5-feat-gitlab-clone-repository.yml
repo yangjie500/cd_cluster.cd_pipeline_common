@@ -1,3 +1,3 @@
 ---
-major_changes:
-  - added logic to pull repository from gitlab repository (private, public)
+minor_changes:
+  - Added the `gitlab_clone_repository` role to clone repositories from both public and private GitLab instances.

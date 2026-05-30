@@ -1,3 +1,3 @@
 ---
-major_changes:
-  - added roles (push_image_to_registry) which chooses between skopeo or cosign and push container images to remote registry (Must be OCI Compliant)
+minor_changes:
+  - Added the `push_image_to_registry` role to provide a unified interface for pushing OCI-compliant container images using either Skopeo or Sigstore Cosign.

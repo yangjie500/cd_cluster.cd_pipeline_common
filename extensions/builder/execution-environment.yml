@@ -1,0 +1,38 @@
+version: 3
+
+images:
+  base_image:
+    name: registry.access.redhat.com/ubi9/python-312-minimal:latest
+
+options:
+  package_manager_path: /usr/bin/microdnf
+
+dependencies:
+  python_interpreter:
+    python_path: /usr/bin/python3.12
+
+  ansible_core:
+    package_pip: ansible-core==2.20.4
+
+  ansible_runner:
+    package_pip: ansible-runner
+
+  galaxy: ../../requirements.yml
+  python: ../../requirements.txt
+
+additional_build_files:
+  - src: ../../dist
+    dest: dist
+
+additional_build_steps:
+  prepend_base:
+    - RUN microdnf update -y && microdnf install -y skopeo git && microdnf clean all
+
+  append_final:
+    - RUN curl -sSL -o /usr/local/bin/cosign https://github.com/sigstore/cosign/releases/download/v2.2.4/cosign-linux-amd64 && chmod +x /usr/local/bin/cosign
+    - RUN /usr/bin/python3.12 --version
+    - RUN ansible --version
+    - RUN ansible-galaxy --version
+    - RUN ansible-runner --version
+    - RUN skopeo --version
+    - RUN cosign version

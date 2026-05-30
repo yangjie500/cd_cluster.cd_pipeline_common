@@ -1,3 +1,3 @@
 ---
 minor_changes:
-  - verify_signature_cosign - added a new custom module to verify container image and artifact signatures using Sigstore Cosign.
+  - Added the `verify_signature_cosign` module to verify container image and artifact signatures using Sigstore Cosign.
