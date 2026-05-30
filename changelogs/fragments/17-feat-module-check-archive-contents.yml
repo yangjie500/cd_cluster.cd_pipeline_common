@@ -1,8 +1,4 @@
 ---
-release_summary: >
-  Added archive validation support through the new
-  `check_archive_contents` module.
-
 minor_changes:
   - Added the `check_archive_contents` module to validate whether required files exist inside tar archives.
   - Added support for `.tar`, `.tar.gz`, and `.tar.bz2` archive inspection using Python `tarfile`.

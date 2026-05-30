@@ -1,7 +1,3 @@
-release_summary: >
-  Added controller-side signal emission workflow with reusable emitter
-  registration, structured signal emission, and OAuth token retrieval support.
-
 minor_changes:
   - Added the `register_emitter` module to register reusable emitter configuration.
   - Added the `signal_emit` module to emit signals through registered emitters.

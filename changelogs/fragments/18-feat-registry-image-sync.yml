@@ -1,8 +1,4 @@
 ---
-release_summary: >
-  Added the `registry_image_sync` role to synchronize OCI container images
-  and optional signature artifacts between remote registries using `skopeo`.
-
 minor_changes:
   - Added the `registry_image_sync` role for remote registry-to-registry OCI image synchronization.
   - Added support for synchronizing OCI image signature artifacts alongside container images.
