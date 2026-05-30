@@ -1,5 +1,5 @@
 ---
-major_changes:
+minor_changes:
   - added logic to push from local to a remote repository (Gitlab)
   - added logic to push tag to remote repository (Gitlab)
   - added logic to push from local to a remote repository on different branch (Gitlab)
