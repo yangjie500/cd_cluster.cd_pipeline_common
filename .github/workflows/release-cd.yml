@@ -66,6 +66,11 @@ jobs:
 
           mv "$BUILT_COLLECTION" dist/project-custom-collection.tar.gz
 
+      - name: Inject custom collection into requirements.yml
+        run: |
+          yq -i '.collections += [{"name": "cd_cluster.pipeline_common", "source": "dist/project-custom-collection.tar.gz", "type": "file"}]' requirements.yml
+          cat requirements.yml
+
       - name: Login to GHCR
         run: |
           echo "${{ secrets.GITHUB_TOKEN }}" | podman login ghcr.io \
