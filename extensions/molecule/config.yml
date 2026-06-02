@@ -1,0 +1,5 @@
+dependency:
+  name: galaxy
+  options:
+    role-file: requirements-test.yml
+    requirements-file: requirements-test.yml
