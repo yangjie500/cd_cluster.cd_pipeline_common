@@ -5,25 +5,21 @@
 
 namespace: "cd_cluster"
 name: "pipeline_common"
-version: 1.0.0
+version: 1.1.0
 readme: README.md
 authors:
   - your name <yj@domain.com>
-
 description: your collection description
 license_file: LICENSE
-
 # TO-DO: update the tags based on your content type
 tags: ["linux", "tools"]
 # TO-DO: maintain this list to reflect the collection's dependencies
 dependencies:
   "ansible.utils": "*" # note: "*" selects the latest version available
-
 repository: http://example.com/repository
 documentation: http://docs.example.com
 homepage: http://example.com
 issues: http://example.com/issue/tracker
-
 # A list of file glob-like patterns used to filter any files or directories that should not be included in the build
 # artifact. A pattern is matched from the relative path of the file or directory of the collection directory. This
 # uses 'fnmatch' to match the files or directories. Some directories and files like 'galaxy.yml', '*.pyc', '*.retry',

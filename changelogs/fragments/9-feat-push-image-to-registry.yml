@@ -1,3 +1,0 @@
----
-minor_changes:
-  - Added the `push_image_to_registry` role to provide a unified interface for pushing OCI-compliant container images using either Skopeo or Sigstore Cosign.

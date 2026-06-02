@@ -1,3 +1,0 @@
----
-minor_changes:
-  - Added the `replace_placeholders` module to replace placeholder values in files using `<VAR>` and `{{ VAR }}` token formats.

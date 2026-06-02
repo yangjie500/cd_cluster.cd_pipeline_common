@@ -1,4 +1,0 @@
----
-minor_changes:
-  - Added the `registry_image_sync` role to support registry-to-registry OCI image synchronization,
-    including registry authentication, configurable TLS verification, unsigned image handling.
