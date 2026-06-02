@@ -56,6 +56,10 @@ jobs:
       - name: Install System dependencies
         run: sudo apt-get update && sudo apt-get install -y rsync
 
+      # Delete the production requirements file so Molecule cannot auto-discover it
+      - name: Remove production requirements file
+        run: rm -f requirements.yml
+
       - name: Run Molecule Tests
         run: molecule test --all
 
