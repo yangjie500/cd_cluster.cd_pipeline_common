@@ -2,4 +2,8 @@
 collections:
   - name: lvrfrc87.git_acp
     version: "2.2.0"
+  - name: cd_cluster.pipeline_common
+    source: dist/project-custom-collection.tar.gz
+    type: file
+  - name: cyberark.pas
 roles: []
