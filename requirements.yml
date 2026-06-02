@@ -2,4 +2,5 @@
 collections:
   - name: lvrfrc87.git_acp
     version: "2.2.0"
+  - name: cyberark.pas
 roles: []
