@@ -60,7 +60,7 @@
         GIT_AUTHOR_EMAIL: "ansible-automation@cd-cluster.com"
         GIT_COMMITTER_NAME: "ansible-automation"
         GIT_COMMITTER_EMAIL: "ansible-automation@cd-cluster.com"
-        GIT_SSL_NO_VERIFY: "{{ 'true' if gitlab_push_repository_verify_remote_server | default(false, true) else 'false' }}"
+        GIT_SSL_NO_VERIFY: "{{ 'true' if not (gitlab_push_repository_verify_remote_server | default(false) | bool) else 'false' }}"
       register: gitlab_push_repository_git_acp_result
 
     - name: Push with Tag

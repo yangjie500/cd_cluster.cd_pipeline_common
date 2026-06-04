@@ -8,7 +8,7 @@
       - "Registry Login URL: {{ push_image_to_registry_cosign_registry_login_url | default('UNDEFINED', true) }}"
       - "Registry Push URL: {{ push_image_to_registry_cosign_registry_url | default('UNDEFINED', true) }}"
       - "Username: {{ push_image_to_registry_cosign_registry_username | default('UNDEFINED', true) }}"
-      - "SSL Verify: {{ push_image_to_registry_cosign_ssl_verify | default('UNDEFINED', true) }}"
+      - "SSL Verify: {{ push_image_to_registry_cosign_ssl_verify | default('UNDEFINED') }}"
       - "Password: {{ '[MASKED]' if (push_image_to_registry_cosign_registry_password | default('', true)) != '' else 'UNDEFINED' }}"
 
 - name: "[INFO] Sanitize input variables (set defaults for UNDEFINED strings)"
@@ -20,7 +20,7 @@
     push_image_to_registry_cosign_registry_url: "{{ push_image_to_registry_cosign_registry_url | default('', true) }}"
     push_image_to_registry_cosign_registry_username: "{{ push_image_to_registry_cosign_registry_username | default('', true) }}"
     push_image_to_registry_cosign_registry_password: "{{ push_image_to_registry_cosign_registry_password | default('', true) }}"
-    push_image_to_registry_cosign_ssl_verify: "{{ push_image_to_registry_cosign_ssl_verify | default(false, true) }}"
+    push_image_to_registry_cosign_ssl_verify: "{{ push_image_to_registry_cosign_ssl_verify | default(false) }}"
 
 - name: "[INFO] Initialize role tracking variables"
   ansible.builtin.set_fact:
