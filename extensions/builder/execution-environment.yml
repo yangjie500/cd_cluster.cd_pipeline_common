@@ -26,7 +26,7 @@ additional_build_files:
 
 additional_build_steps:
   prepend_base:
-    - RUN microdnf update -y && microdnf install -y skopeo git which && microdnf clean all
+    - RUN microdnf update -y && microdnf install -y skopeo git which sshpass && microdnf clean all
 
   append_final:
     - ENV HOME=/runner
