@@ -56,6 +56,16 @@
           docker://{{ push_image_to_registry_generic_registry_url }}{% if push_image_to_registry_generic_image_name | length > 0 %}/{{ push_image_to_registry_generic_image_name }}{% endif %}:{{ push_image_to_registry_generic_image_tag }}
       register: push_image_to_registry_generic_skopeo_copy_result
       changed_when: push_image_to_registry_generic_skopeo_copy_result.rc == 0
+      until: >
+        push_image_to_registry_generic_skopeo_copy_result.rc == 0 or
+        (
+          'invalid username/password' in (push_image_to_registry_generic_skopeo_copy_result.stderr | default('') | lower) or
+          'no such file or directory' in (push_image_to_registry_generic_skopeo_copy_result.stderr | default('') | lower) or
+          'no such image' in (push_image_to_registry_generic_skopeo_copy_result.stderr | default('') | lower) or
+          'manifest unknown' in (push_image_to_registry_generic_skopeo_copy_result.stderr | default('') | lower) or
+          'invalid reference' in (push_image_to_registry_generic_skopeo_copy_result.stderr | default('') | lower)
+        )
+      failed_when: push_image_to_registry_generic_skopeo_copy_result.rc != 0
 
     - name: "[INFO] Update custom facts with operation output"
       ansible.builtin.set_fact:
