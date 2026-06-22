@@ -63,3 +63,33 @@ repos:
     rev: 7.0.0
     hooks:
       - id: flake8
+
+  # - repo: https://github.com/adrienverge/yamllint
+  #   rev: v1.35.1
+  #   hooks:
+  #     - id: yamllint
+
+  - repo: https://github.com/ansible/ansible-lint
+    rev: v26.4.0
+    hooks:
+      - id: ansible-lint
+        language_version: python3.12
+        additional_dependencies:
+          - ansible-core==2.20.4
+
+  - repo: local
+    hooks:
+      - id: ansible-test-sanity
+        name: Ansible test sanity
+        entry: ansible-test sanity
+        language: system
+        pass_filenames: false
+        always_run: true
+
+  - repo: local
+    hooks:
+      - id: python-unit-tests
+        name: Python unit tests
+        entry: python3 -m pytest ./tests/unit/
+        language: system
+        pass_filenames: false
