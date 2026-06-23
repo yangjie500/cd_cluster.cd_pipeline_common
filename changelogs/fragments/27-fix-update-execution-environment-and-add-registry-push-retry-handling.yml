@@ -1,0 +1,5 @@
+---
+bugfixes:
+  - Fixed TLS and SSL verification boolean handling across GitLab and registry image roles.
+  - Added retry handling for registry image push operations using Skopeo and Sigstore Cosign.
+  - Updated the execution environment build configuration to include required registry, Git, SSH, and Cosign tooling.
