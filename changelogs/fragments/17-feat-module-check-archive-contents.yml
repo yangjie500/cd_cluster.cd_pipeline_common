@@ -1,4 +1,0 @@
----
-minor_changes:
-  - Added the `check_archive_contents` module to validate required files within `.tar`, `.tar.gz`, and `.tar.bz2` archives,
-    including support for nested path basename matching and structured validation results.

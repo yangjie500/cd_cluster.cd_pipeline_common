@@ -1,3 +1,0 @@
----
-minor_changes:
-  - Added the `validate_environment_inputs` role to validate required environment variables and secrets before pipeline execution.

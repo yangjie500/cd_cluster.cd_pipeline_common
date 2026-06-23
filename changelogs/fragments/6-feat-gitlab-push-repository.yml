@@ -1,4 +1,0 @@
----
-minor_changes:
-  - Added the `gitlab_push_repository` role to push local repository changes and tags to remote GitLab repositories,
-    including support for pushing to alternate branches.
