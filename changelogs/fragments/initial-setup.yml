@@ -1,5 +1,0 @@
----
-minor_changes:
-  - Added the initial collection project structure, including automated documentation generation, Molecule scenario setup,
-    and CI/CD configuration targeting Ansible 2.20 and Python 3.12.
-  - Added baseline development tooling and validation support, including unit test scaffolding, pre-commit configuration, and VS Code workspace settings.

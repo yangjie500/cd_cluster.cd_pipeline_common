@@ -2,32 +2,44 @@
 
 Refer to the [Ansible community guide](https://docs.ansible.com/ansible/devel/community/index.html).
 
-## Getting Starting with Development
+## Getting Started with Development
 
-### Requirement
+### Requirements
 
-- RHEL Environment (or whatever suits but below package have to be changed)
-- [Docker](https://docs.docker.com/engine/install/rhel/)
-- Below packages
+- RHEL or Ubuntu environment
+- Docker:
+  - [RHEL](https://docs.docker.com/engine/install/rhel/)
+  - [Ubuntu](https://docs.docker.com/engine/install/ubuntu/)
+- System packages for your platform:
 
 ```bash
-dnf install python3.9 # For pre-commit to work
-dnf install python3.12
+# RHEL
+sudo dnf install -y python3.9 python3.12 rsync curl
+```
+
+```bash
+# Ubuntu
+sudo apt-get update
+sudo apt-get install -y python3.12 python3.12-venv python3-pip rsync curl
+```
+
+- Python dependencies and tools:
+
+```bash
 python3.12 -m venv custom-venv
 source custom-venv/bin/activate
 python -m pip install --upgrade pip
-pip3 install docsible
-python3 -m pip install ansible-core==2.20.4
-pip3 install ansible-dev-tools
-pip3 install molecule-plugins[docker]
-pip3 install tenacity
-pip install pre-commit
-sudo dnf install -y rsync
+python -m pip install docsible
+python -m pip install ansible-core==2.20.4
+python -m pip install ansible-dev-tools
+python -m pip install "molecule-plugins[docker]"
+python -m pip install tenacity
+python -m pip install pre-commit
 
-# Install Cosign
-curl -O -L "https://github.com/sigstore/cosign/releases/latest/download/cosign-linux-amd64"
+# Install Cosign (Optional)
+curl -O -L "https://github.com/sigstore/cosign/releases/v2.2.4/download/cosign-linux-amd64"
 sudo mv cosign-linux-amd64 /usr/local/bin/cosign
 sudo chmod +x /usr/local/bin/cosign
 ```
 
-- OR just install the test-requirements.txt and test-requirments.yml
+- Or install the dependencies from `test-requirements.txt` and `test-requirements.yml`.
