@@ -1,4 +1,5 @@
 # .github/workflows/create-release-pr.yml
+---
 name: Create Release PR
 
 on:
@@ -9,6 +10,7 @@ on:
         required: true
 
 permissions:
+  actions: write
   contents: write
   pull-requests: write
 
@@ -37,6 +39,7 @@ jobs:
           yq -i '.version = "${{ inputs.version }}"' galaxy.yml
 
       - name: Create release PR
+        id: create-release-pr
         uses: peter-evans/create-pull-request@v7
         with:
           branch: release/${{ inputs.version }}
@@ -55,3 +58,10 @@ jobs:
           labels: |
             release
           delete-branch: false
+
+      - name: Run tests for release PR
+        if: steps.create-release-pr.outputs.pull-request-number != ''
+        env:
+          GH_TOKEN: ${{ github.token }}
+          RELEASE_BRANCH: release/${{ inputs.version }}
+        run: gh workflow run code-test.yml --ref "${RELEASE_BRANCH}"

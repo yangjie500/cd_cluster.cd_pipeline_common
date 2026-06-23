@@ -6,9 +6,10 @@ concurrency:
   cancel-in-progress: true
 
 on:
+  workflow_dispatch:
   push:
     branches:
-      - "**"        # Matches all branches including those with slashes (e.g., feature/test)
+      - "main"
   pull_request:
     branches:
       - "**"

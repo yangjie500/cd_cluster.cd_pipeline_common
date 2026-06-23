@@ -6,12 +6,12 @@
       - "Src Registry: {{ registry_image_sync_src_registry_url | default('UNDEFINED', true) }}"
       - "Src Image Name: {{ registry_image_sync_src_image_name | default('UNDEFINED', true) }}"
       - "Src Image Tag: {{ registry_image_sync_src_image_tag | default('UNDEFINED', true) }}"
-      - "Src TLS Verify: {{ registry_image_sync_src_tls_verify | default('UNDEFINED', true) }}"
+      - "Src TLS Verify: {{ registry_image_sync_src_tls_verify | default('UNDEFINED') }}"
       - "--- DESTINATION CONFIGURATION ---"
       - "Dest Registry: {{ registry_image_sync_dest_registry_url | default('UNDEFINED', true) }}"
       - "Dest Image Name: {{ registry_image_sync_dest_image_name | default('UNDEFINED', true) }}"
       - "Dest Image Tag: {{ registry_image_sync_dest_image_tag | default('UNDEFINED', true) }}"
-      - "Dest TLS Verify: {{ registry_image_sync_dest_tls_verify | default('UNDEFINED', true) }}"
+      - "Dest TLS Verify: {{ registry_image_sync_dest_tls_verify | default('UNDEFINED') }}"
 
 - name: "[INFO] Sanitize input variables (set defaults)"
   ansible.builtin.set_fact:
@@ -25,8 +25,8 @@
     registry_image_sync_src_image_tag: "{{ registry_image_sync_src_image_tag | default('', true) | trim }}"
     registry_image_sync_dest_image_name: "{{ registry_image_sync_dest_image_name | default('', true) | trim }}"
     registry_image_sync_dest_image_tag: "{{ registry_image_sync_dest_image_tag | default('', true) | trim }}"
-    registry_image_sync_src_tls_verify: "{{ registry_image_sync_src_tls_verify | default(true) | bool }}"
-    registry_image_sync_dest_tls_verify: "{{ registry_image_sync_dest_tls_verify | default(true) | bool }}"
+    registry_image_sync_src_tls_verify: "{{ registry_image_sync_src_tls_verify | default(false) | bool }}"
+    registry_image_sync_dest_tls_verify: "{{ registry_image_sync_dest_tls_verify | default(false) | bool }}"
 
 - name: "[INFO] Initialize role tracking variables"
   ansible.builtin.set_fact:

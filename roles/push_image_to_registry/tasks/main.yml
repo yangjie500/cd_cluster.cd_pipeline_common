@@ -7,7 +7,7 @@
       - "Registry Login URL: {{ push_image_to_registry_registry_login_url | default('UNDEFINED', true) }}"
       - "Registry Push URL: {{ push_image_to_registry_registry_url | default('UNDEFINED', true) }}"
       - "Username: {{ push_image_to_registry_registry_username | default('UNDEFINED', true) }}"
-      - "SSL Verify: {{ push_image_to_registry_ssl_verify | default('UNDEFINED', true) }}"
+      - "SSL Verify: {{ push_image_to_registry_ssl_verify | default('UNDEFINED') }}"
       - "Password: {{ '[MASKED]' if (push_image_to_registry_registry_password | default('', true)) != '' else 'UNDEFINED' }}"
 
 - name: "[INFO] Sanitize input variables"
@@ -19,7 +19,7 @@
     push_image_to_registry_registry_login_url: "{{ push_image_to_registry_registry_login_url | default(push_image_to_registry_registry_url, true) | string }}"
     push_image_to_registry_registry_username: "{{ push_image_to_registry_registry_username | default('', true) | string }}"
     push_image_to_registry_registry_password: "{{ push_image_to_registry_registry_password | default('', true) | string }}"
-    push_image_to_registry_ssl_verify: "{{ push_image_to_registry_ssl_verify | default(true, true) | bool }}"
+    push_image_to_registry_ssl_verify: "{{ push_image_to_registry_ssl_verify | default(false) | bool }}"
 
 - name: "[INFO] Initialize role tracking variables"
   ansible.builtin.set_fact:
